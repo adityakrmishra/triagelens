@@ -114,7 +114,7 @@ E   AssertionError: Silent bug reproduced: VIP25 promo ignored when has_sale_ite
 E   assert 2000.0 == 1500.0
 =========================== short test summary info ===========================
 FAILED agent37_workspace/CLU-001/test_repro_apply_promo.py::test_reproduce_vip25_silent_failure_on_sale_item
-============================== 1 failed in 0.09s ==============================
+============================== 1 failed in 0.08s ==============================
 ```
 
 </details>
