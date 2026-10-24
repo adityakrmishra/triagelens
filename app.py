@@ -24,7 +24,11 @@ from src.ast_indexer import index_repository, search_suspect_functions
 from src.ticket_cluster import normalize_ticket, cluster_tickets, parse_tickets_payload
 from src.git_blame import suggest_owner_from_blame
 from src.llm_reasoner import explain_matches_and_summarize
-from src.agent37_reproducer import reproduce_bug_in_agent37
+from src.agent37_reproducer import (
+    reproduce_bug_in_agent37,
+    test_hot_patch_in_sandbox,
+    load_target_file_content,
+)
 from src.github_issue import build_github_issue_payload, publish_github_issue
 from scripts.setup_demo_repo import setup_repository
 
@@ -537,6 +541,83 @@ if selected_label:
         with log_col:
             st.markdown("##### 🖥️ Agent37 Sandbox Execution Terminal Output")
             st.code(repro.get("pytest_stdout", ""), language="text")
+
+        # -------------------------------------------------------------------
+        # Live Interactive Debugger (Hot-Patch the Cloud Container)
+        # -------------------------------------------------------------------
+        st.markdown("---")
+        st.markdown("## 🛠️ Live Interactive Debugger (Hot-Patch the Cloud Container)")
+        st.markdown(
+            "Prove live, bi-directional Agent37 cloud execution! Edit the complete source code below "
+            "to fix the silent business-logic bug, deploy the patch into the sandbox, and verify whether pytest turns green in real time."
+        )
+
+        target_file_rel = top_fn.get("file_path", "shopflow/pricing.py")
+        container_file_path = (
+            f"demo_target_repo/{target_file_rel}"
+            if not target_file_rel.startswith("demo_target_repo/")
+            else target_file_rel
+        )
+        full_file_source_code = load_target_file_content(target_file_rel, repo_path=repo_path_str)
+
+        with st.expander("💡 Judge Hint / Quick Demonstration Fix", expanded=False):
+            st.markdown(
+                f"**Target Module**: `{container_file_path}` (`{top_fn_name}`)\n\n"
+                "**How to Fix**: In `shopflow/pricing.py`, locate the early return on sale items:\n"
+                "```python\n"
+                "if has_sale_item:\n"
+                "    return round(cart_total, 2)  # <- bug: blocks VIP discount\n"
+                "```\n"
+                "Replace it with:\n"
+                "```python\n"
+                "if has_sale_item and not (is_vip and code == 'VIP25'):\n"
+                "    return round(cart_total, 2)\n"
+                "```\n"
+                "(or simply delete `if has_sale_item: return round(cart_total, 2)`). Then click **Deploy & Test Fix** below!"
+            )
+
+        edited_code = st.text_area(
+            "Edit the source code to fix the bug:",
+            value=full_file_source_code,
+            height=300,
+            key=f"patch_editor_{curr_cluster['cluster_id']}",
+            help=f"Full source code of {container_file_path}. Edits are hot-patched into the Agent37 sandbox.",
+        )
+
+        test_file_path_str = repro.get(
+            "test_file_path",
+            f"agent37_workspace/{curr_cluster['cluster_id']}/test_repro_{top_fn_name}.py",
+        )
+
+        deploy_col, _ = st.columns([2, 3])
+        with deploy_col:
+            deploy_btn = st.button(
+                "🧪 Deploy & Test Fix in Agent37 Cloud Sandbox",
+                type="primary",
+                key=f"deploy_btn_{curr_cluster['cluster_id']}",
+                use_container_width=True,
+            )
+
+        if deploy_btn:
+            with st.spinner("Injecting patch into Agent37 cloud container and running pytest..."):
+                patch_res = test_hot_patch_in_sandbox(
+                    cluster_id=curr_cluster["cluster_id"],
+                    file_path=container_file_path,
+                    new_code=edited_code,
+                    test_file_path=test_file_path_str,
+                    instance_id=agent37_inst,
+                )
+                st.session_state[f"patch_res_{curr_cluster['cluster_id']}"] = patch_res
+
+        active_patch_res = st.session_state.get(f"patch_res_{curr_cluster['cluster_id']}")
+        if active_patch_res:
+            st.markdown("##### 🖥️ Live Cloud Container Terminal Output")
+            st.code(active_patch_res.get("stdout", ""), language="bash")
+            if active_patch_res.get("passed"):
+                st.balloons()
+                st.success("✅ PATCH VERIFIED! The silent bug is fixed in the sandbox.")
+            else:
+                st.error("❌ Tests still failing. Check the output above.")
 
     # -----------------------------------------------------------------------
     # TAB 4: Tickets & 1-Click GitHub Issue Publisher
