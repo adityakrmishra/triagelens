@@ -132,8 +132,10 @@ def build_github_issue_payload(
         else:
             repo_rel_path = clean_fpath
 
+        repo = os.getenv("GITHUB_REPO", GITHUB_REPO).strip()
+        branch = os.getenv("GITHUB_BRANCH", GITHUB_BRANCH).strip()
         permalink = (
-            f"https://github.com/{GITHUB_REPO}/blob/{GITHUB_BRANCH}/"
+            f"https://github.com/{repo}/blob/{branch}/"
             f"{repo_rel_path}#L{s_line}-L{e_line}"
         )
 
@@ -252,13 +254,15 @@ def publish_github_issue(
     local_file.write_text(md_content, encoding="utf-8", errors="replace")
 
     # 2. Attempt GitHub REST API publishing if token is present
-    if not _is_placeholder(GITHUB_TOKEN):
+    active_token = os.getenv("GITHUB_TOKEN", GITHUB_TOKEN).strip()
+    active_repo = os.getenv("GITHUB_REPO", GITHUB_REPO).strip()
+    if not _is_placeholder(active_token):
         try:
             import requests
 
-            url = f"https://api.github.com/repos/{GITHUB_REPO}/issues"
+            url = f"https://api.github.com/repos/{active_repo}/issues"
             headers = {
-                "Authorization": f"Bearer {GITHUB_TOKEN.strip()}",
+                "Authorization": f"Bearer {active_token}",
                 "Accept": "application/vnd.github+json",
                 "X-GitHub-Api-Version": "2022-11-28",
             }
