@@ -9,7 +9,7 @@
 | **Priority Escalation** | **`P0`** (3 duplicate complaints filed. Business impact score: 31. Immediate escalation required.) |
 | **Customer Reports** | `3` duplicate complaint(s) grouped |
 | **Suggested Code Owner** | **@aarav-payments** (Aarav Sharma &lt;aarav@shopflow.io&gt;) |
-| **Agent37 Sandbox Status** | **`CONFIRMED_SILENT_BUG`** (Instance `agent37-sandbox-demo-01`) |
+| **Agent37 Sandbox Status** | **`ERROR`** (Instance `agent37-sandbox-demo-01`) |
 
 ---
 
@@ -48,7 +48,7 @@ Multiple high-value VIP customers report that entering the VIP25 promo code leav
 - **Sandbox Platform**: [Agent37 Cloud Sandbox](https://api.agent37.com) (`sandbox.agent37.app`)
 - **Verification Protocol**: Automated `pytest` execution verifying silent logic bug divergence (`AssertionError`)
 
-> **Assertion Result**: Silent bug reproduced: VIP25 promo ignored when has_sale_item=True (expected 1500.0, got 2000.0)
+> **Assertion Result**: Test execution crashed with exit code -1.
 
 <details>
 <summary><b>View Generated pytest Reproduction Code</b></summary>
@@ -98,25 +98,7 @@ def test_reproduce_vip25_silent_failure_on_sale_item():
 <summary><b>Agent37 Pytest Execution Log</b></summary>
 
 ```text
-============================= test session starts =============================
-platform win32 -- Python 3.13.7, pytest-9.0.3, pluggy-1.6.0 -- C:\Program Files\Python313\python.exe
-cachedir: .pytest_cache
-rootdir: C:\Users\adity\Music\Hackyard\main hackthon
-plugins: anyio-4.13.0, asyncio-1.4.0
-asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collecting ... collected 1 item
-
-agent37_workspace/CLU-001/test_repro_apply_promo.py::test_reproduce_vip25_silent_failure_on_sale_item FAILED [100%]
-
-================================== FAILURES ===================================
-______________ test_reproduce_vip25_silent_failure_on_sale_item _______________
-agent37_workspace\CLU-001\test_repro_apply_promo.py:33: in test_reproduce_vip25_silent_failure_on_sale_item
-    assert actual == expected, (
-E   AssertionError: Silent bug reproduced: VIP25 promo ignored when has_sale_item=True (expected 1500.0, got 2000.0)
-E   assert 2000.0 == 1500.0
-=========================== short test summary info ===========================
-FAILED agent37_workspace/CLU-001/test_repro_apply_promo.py::test_reproduce_vip25_silent_failure_on_sale_item
-============================== 1 failed in 0.08s ==============================
+Agent37 sandbox test execution timed out (15s).
 ```
 
 </details>

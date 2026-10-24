@@ -113,7 +113,7 @@ E   AssertionError: Silent bug reproduced: Magic link expired after 30 seconds i
 E   assert False is True
 =========================== short test summary info ===========================
 FAILED agent37_workspace/CLU-003/test_repro_check_magic_link_expiry.py::test_reproduce_magic_link_premature_expiry
-============================== 1 failed in 0.46s ==============================
+============================== 1 failed in 0.30s ==============================
 ```
 
 </details>
