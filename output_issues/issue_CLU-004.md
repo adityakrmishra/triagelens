@@ -118,7 +118,7 @@ E   assert 333.34000000000003 <= 0.05
 E    +  where 333.34000000000003 = abs((416.67 - 83.33))
 =========================== short test summary info ===========================
 FAILED agent37_workspace/CLU-004/test_repro_prorate_upgrade_charge.py::test_reproduce_subscription_upgrade_inverted_proration
-============================== 1 failed in 0.07s ==============================
+============================== 1 failed in 0.16s ==============================
 ```
 
 </details>
