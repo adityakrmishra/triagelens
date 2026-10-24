@@ -1,0 +1,164 @@
+[
+  {
+    "_schema": "zendesk_v2",
+    "id": 100201,
+    "type": "ticket",
+    "subject": "VIP25 promo code not working when sale item is in cart",
+    "description": "Hi support team, I have been a VIP member for 2 years and always use my VIP25 code at checkout. Today I added a clearance handbag to my cart and the VIP25 code did absolutely nothing — the price stayed the same. I tried removing and re-applying the code multiple times. Is VIP25 disabled during clearance events? No error was shown, it just didn't reduce my total at all.",
+    "priority": "high",
+    "status": "open",
+    "created_at": "2026-10-22T08:14:33Z",
+    "updated_at": "2026-10-22T08:14:33Z",
+    "requester": {
+      "name": "Meera Iyer",
+      "email": "meera.iyer@gmail.com"
+    },
+    "tags": ["vip", "promo", "discount", "clearance"],
+    "channel": "email",
+    "satisfaction_rating": null
+  },
+  {
+    "_schema": "zendesk_v2",
+    "id": 100247,
+    "type": "ticket",
+    "subject": "VIP discount code shows applied but price never changes — sale section",
+    "description": "Hello, I'm reaching out because my VIP25 loyalty discount is broken. Every time I shop in the sale section and enter VIP25 at checkout, the code appears as 'applied' in the UI but my order total remains exactly the same as before. My friend who doesn't have VIP says SAVE20 worked fine for her on a non-sale item. This is really frustrating for long-time VIP customers like me. Please fix this urgently.",
+    "priority": "high",
+    "status": "open",
+    "created_at": "2026-10-22T11:45:07Z",
+    "updated_at": "2026-10-22T12:01:45Z",
+    "requester": {
+      "name": "Arjun Krishnamurthy",
+      "email": "arjun.k@outlook.com"
+    },
+    "tags": ["vip25", "discount-code", "sale", "bug"],
+    "channel": "web",
+    "satisfaction_rating": null
+  },
+  {
+    "_schema": "jira_v3",
+    "id": "SUP-8812",
+    "issueType": "Support Request",
+    "summary": "VIP25 coupon silently ignored on carts containing any sale/discounted product",
+    "description": "Customer report: Applied VIP25 code to a cart worth ₹4,200 containing one item from the clearance rack. The checkout page said 'Promo applied' but the cart total showed ₹4,200 — no discount was reflected. Refreshed the page, cleared browser cache, tried on mobile app — same result every time. The customer is a verified VIP tier member. SAVE20 was not tested. Expected behaviour: 25% off the total.",
+    "priority": {
+      "name": "High"
+    },
+    "status": {
+      "name": "Open"
+    },
+    "created": "2026-10-23T06:30:00Z",
+    "updated": "2026-10-23T06:30:00Z",
+    "reporter": {
+      "displayName": "ShopFlow Support Bot",
+      "emailAddress": "support-bot@shopflow.io"
+    },
+    "labels": ["promo", "vip", "silent-failure", "clearance"],
+    "customFields": {
+      "affectedUser": "rahul.desai@company.com",
+      "region": "IN"
+    }
+  },
+  {
+    "_schema": "zendesk_v2",
+    "id": 100318,
+    "type": "ticket",
+    "subject": "Charged ₹99 shipping even though my cart was exactly ₹1000 — free shipping promised",
+    "description": "Your website clearly says 'Free Shipping on orders ₹1,000 and above'. My cart total was exactly ₹1,000.00. I went all the way through checkout and was still charged ₹99 for shipping. I did not use any promo code. This feels like false advertising. I have a screenshot of the cart showing ₹1,000 and the checkout showing ₹99 shipping fee. Please refund the shipping charge and fix your website.",
+    "priority": "normal",
+    "status": "open",
+    "created_at": "2026-10-21T14:22:50Z",
+    "updated_at": "2026-10-21T15:00:12Z",
+    "requester": {
+      "name": "Divya Menon",
+      "email": "divya.menon84@gmail.com"
+    },
+    "tags": ["shipping", "free-shipping", "billing", "threshold"],
+    "channel": "chat",
+    "satisfaction_rating": null
+  },
+  {
+    "_schema": "jira_v3",
+    "id": "SUP-8799",
+    "issueType": "Bug Report",
+    "summary": "Free shipping threshold bug — exact ₹1000 cart still charged ₹99 delivery fee",
+    "description": "Two separate customers (emails on file) both placed orders with a cart subtotal of exactly ₹1,000. Both were charged a ₹99 shipping fee at checkout. The website's landing page banner reads 'Free delivery on orders worth ₹1,000+'. No discount codes were applied; the product prices themselves summed to ₹1,000 exactly. Orders were to addresses in Maharashtra. This is likely a boundary condition issue with the free shipping eligibility check.",
+    "priority": {
+      "name": "Normal"
+    },
+    "status": {
+      "name": "In Progress"
+    },
+    "created": "2026-10-21T09:11:00Z",
+    "updated": "2026-10-22T08:45:00Z",
+    "reporter": {
+      "displayName": "Kavya Sharma",
+      "emailAddress": "kavya.sharma@shopflow.io"
+    },
+    "labels": ["shipping", "threshold", "off-by-one", "boundary"],
+    "customFields": {
+      "affectedOrderIds": ["ORD-29911", "ORD-29934"],
+      "region": "IN-MH"
+    }
+  },
+  {
+    "_schema": "zendesk_v2",
+    "id": 100390,
+    "type": "ticket",
+    "subject": "Magic link login says 'Link Expired' just 30 seconds after I received the email",
+    "description": "I use passwordless login on your app. I received the magic link email, clicked it within about 30 seconds, and got a 'This link has expired' error page. I tried requesting a new link three times and the same thing happened every time. I'm in the same timezone as my account was registered. The link expires basically the moment I click it. I've never had this problem before — it started happening this week. Please help, I cannot log in to my account at all.",
+    "priority": "urgent",
+    "status": "open",
+    "created_at": "2026-10-23T17:05:44Z",
+    "updated_at": "2026-10-23T17:05:44Z",
+    "requester": {
+      "name": "Nikhil Joshi",
+      "email": "nikhil.joshi@protonmail.com"
+    },
+    "tags": ["login", "magic-link", "expired", "authentication", "urgent"],
+    "channel": "email",
+    "satisfaction_rating": null
+  },
+  {
+    "_schema": "jira_v3",
+    "id": "SUP-8901",
+    "issueType": "Support Request",
+    "summary": "One-time login email link expires in seconds — customers completely locked out",
+    "description": "Multiple customers are reporting that clicking the email sign-in link within 10–45 seconds of receiving it results in an immediate 'Link Expired' message. The expected behaviour is that these links should remain valid for at least 15 minutes. One customer specifically timed it: received email at 17:04, clicked at 17:04:38 (38 seconds later), link already expired. This is causing widespread lockouts. Needs immediate investigation.",
+    "priority": {
+      "name": "Critical"
+    },
+    "status": {
+      "name": "Open"
+    },
+    "created": "2026-10-23T18:30:00Z",
+    "updated": "2026-10-23T18:45:00Z",
+    "reporter": {
+      "displayName": "ShopFlow Support Bot",
+      "emailAddress": "support-bot@shopflow.io"
+    },
+    "labels": ["auth", "magic-link", "ttl", "critical", "lockout"],
+    "customFields": {
+      "affectedUserCount": 17,
+      "region": "ALL"
+    }
+  },
+  {
+    "_schema": "zendesk_v2",
+    "id": 100455,
+    "type": "ticket",
+    "subject": "Upgrading plan with 5 days left charged me for 25 days — billing is wrong",
+    "description": "I upgraded my subscription from the Basic plan to the Pro plan on the 25th of the month. I had only 5 days remaining in my current billing cycle. Instead of charging me a prorated amount for those 5 days on the new plan, you charged me what looks like 25 days worth of the price difference. My invoice shows a prorated charge of ₹833 but I calculated it should only be ₹166 for 5 days. Please review my account and issue a corrected invoice. This is a significant overcharge.",
+    "priority": "high",
+    "status": "open",
+    "created_at": "2026-10-24T10:18:29Z",
+    "updated_at": "2026-10-24T10:18:29Z",
+    "requester": {
+      "name": "Pooja Agarwal",
+      "email": "pooja.agarwal@startup.in"
+    },
+    "tags": ["subscription", "billing", "prorate", "overcharge", "upgrade"],
+    "channel": "web",
+    "satisfaction_rating": null
+  }
+]

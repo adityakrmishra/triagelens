@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+chroma_db/
+.pytest_cache/
+agent37_sandbox_run/
+.streamlit/

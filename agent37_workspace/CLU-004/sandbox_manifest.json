@@ -1,0 +1,10 @@
+{
+  "agent37_instance_id": "agent37-sandbox-demo-01",
+  "cluster_id": "CLU-004",
+  "target_function": "shopflow/subscriptions.py::prorate_upgrade_charge",
+  "target_file": "shopflow/subscriptions.py",
+  "timestamp": "2026-10-24T12:44:29.461926+00:00",
+  "status": "CONFIRMED_SILENT_BUG",
+  "bug_reproduced": true,
+  "duration_ms": 837
+}
