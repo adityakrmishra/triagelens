@@ -243,12 +243,17 @@ def test_reproduce_generic_behavior():
 # ---------------------------------------------------------------------------
 # Agent37 Cloud Prober & Sandbox Runner
 # ---------------------------------------------------------------------------
+_CLOUD_PROBE_CACHE: dict[str, Any] | None = None
 
-def probe_agent37_cloud_instance() -> dict[str, Any]:
+def probe_agent37_cloud_instance(force_refresh: bool = False) -> dict[str, Any]:
     """
     Query the Agent37 Cloud REST API to verify authentication, billing status,
-    and discover active instances.
+    and discover active instances. Results are cached in-memory across clusters.
     """
+    global _CLOUD_PROBE_CACHE
+    if not force_refresh and _CLOUD_PROBE_CACHE is not None:
+        return _CLOUD_PROBE_CACHE
+
     if _is_placeholder(AGENT37_API_KEY):
         return {
             "authenticated": False,
@@ -303,6 +308,7 @@ def probe_agent37_cloud_instance() -> dict[str, Any]:
     except Exception as exc:
         res["error"] = str(exc)
 
+    _CLOUD_PROBE_CACHE = res
     return res
 
 
@@ -432,12 +438,12 @@ def reproduce_bug_in_agent37(
             encoding="utf-8",
             errors="replace",
             env=env,
-            timeout=15,
+            timeout=35,
         )
         stdout = proc.stdout + "\n" + proc.stderr
         returncode = proc.returncode
     except subprocess.TimeoutExpired:
-        stdout = "Agent37 sandbox test execution timed out (15s)."
+        stdout = "Agent37 sandbox test execution timed out (35s)."
         returncode = -1
     except Exception as exc:
         stdout = f"Agent37 sandbox execution error: {exc}"
