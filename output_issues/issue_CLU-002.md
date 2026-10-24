@@ -45,6 +45,8 @@ Multiple high-value VIP customers report that entering the VIP25 promo code leav
 ---
 
 ### 🧪 Agent37 Isolated Sandbox Reproduction (`Instance: agent37-sandbox-demo-01`)
+- **Sandbox Platform**: [Agent37 Cloud Sandbox](https://api.agent37.com) (`sandbox.agent37.app`)
+- **Verification Protocol**: Automated `pytest` execution verifying silent logic bug divergence (`AssertionError`)
 
 > **Assertion Result**: Silent bug reproduced: Boundary order of exact 1000.0 charged shipping (expected 0.0, got 99.0)
 

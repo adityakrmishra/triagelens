@@ -3,8 +3,18 @@
   "cluster_id": "CLU-004",
   "target_function": "shopflow/subscriptions.py::prorate_upgrade_charge",
   "target_file": "shopflow/subscriptions.py",
-  "timestamp": "2026-10-24T12:50:01.470343+00:00",
+  "timestamp": "2026-10-24T13:11:25.367895+00:00",
   "status": "CONFIRMED_SILENT_BUG",
+  "cloud_platform": "Agent37 Cloud Sandbox (https://api.agent37.com)",
+  "agent37_api_authenticated": true,
+  "agent37_account": "cjrcoder@gmail.com",
+  "agent37_balance_usd": 0,
+  "agent37_gateway": {
+    "exec_status": 404,
+    "exec_endpoint": "https://sandbox.agent37.app/v1/instances/agent37-sandbox-demo-01/exec",
+    "responses_status": 404,
+    "responses_endpoint": "https://agent37-sandbox-demo-01.agent37.app/v1/responses"
+  },
   "bug_reproduced": true,
-  "duration_ms": 793
+  "duration_ms": 5693
 }

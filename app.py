@@ -498,10 +498,12 @@ if selected_label:
     # -----------------------------------------------------------------------
     with tab3:
         st.markdown("#### 🧪 Agent37 Isolated Cloud Sandbox Bug Reproduction")
-        st.caption(
-            "TriageLens synthesizes a tailored pytest reproduction suite based on customer ticket parameters, "
-            "executes it in an isolated sandbox, and asserts the silent business rule failure."
-        )
+        cloud_p = repro.get("cloud_probe", {})
+        if cloud_p and cloud_p.get("authenticated"):
+            st.success(
+                f"🛡️ **Agent37 Live API Connected**: Authenticated as `{cloud_p.get('account')}` "
+                f"| Balance: `${cloud_p.get('balance_usd', 0.0):.4f}` USD | Platform: `https://api.agent37.com`"
+            )
 
         r_col1, r_col2 = st.columns([1, 2])
         with r_col1:

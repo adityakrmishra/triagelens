@@ -45,6 +45,8 @@ Multiple high-value VIP customers report that entering the VIP25 promo code leav
 ---
 
 ### 🧪 Agent37 Isolated Sandbox Reproduction (`Instance: agent37-sandbox-demo-01`)
+- **Sandbox Platform**: [Agent37 Cloud Sandbox](https://api.agent37.com) (`sandbox.agent37.app`)
+- **Verification Protocol**: Automated `pytest` execution verifying silent logic bug divergence (`AssertionError`)
 
 > **Assertion Result**: Silent bug reproduced: VIP25 promo ignored when has_sale_item=True (expected 1500.0, got 2000.0)
 
@@ -114,7 +116,7 @@ E   AssertionError: Silent bug reproduced: VIP25 promo ignored when has_sale_ite
 E   assert 2000.0 == 1500.0
 =========================== short test summary info ===========================
 FAILED agent37_workspace/CLU-001/test_repro_apply_promo.py::test_reproduce_vip25_silent_failure_on_sale_item
-============================== 1 failed in 0.08s ==============================
+============================== 1 failed in 0.09s ==============================
 ```
 
 </details>

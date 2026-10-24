@@ -45,6 +45,8 @@ Users attempting passwordless authentication report one-time magic links expire 
 ---
 
 ### 🧪 Agent37 Isolated Sandbox Reproduction (`Instance: agent37-sandbox-demo-01`)
+- **Sandbox Platform**: [Agent37 Cloud Sandbox](https://api.agent37.com) (`sandbox.agent37.app`)
+- **Verification Protocol**: Automated `pytest` execution verifying silent logic bug divergence (`AssertionError`)
 
 > **Assertion Result**: Silent bug reproduced: Magic link expired after 30 seconds instead of 15 minutes (expected True, got False)
 

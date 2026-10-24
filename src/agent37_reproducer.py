@@ -241,8 +241,70 @@ def test_reproduce_generic_behavior():
 
 
 # ---------------------------------------------------------------------------
-# Agent37 Sandbox Runner
+# Agent37 Cloud Prober & Sandbox Runner
 # ---------------------------------------------------------------------------
+
+def probe_agent37_cloud_instance() -> dict[str, Any]:
+    """
+    Query the Agent37 Cloud REST API to verify authentication, billing status,
+    and discover active instances.
+    """
+    if _is_placeholder(AGENT37_API_KEY):
+        return {
+            "authenticated": False,
+            "account": None,
+            "balance_usd": 0.0,
+            "active_instance_id": None,
+            "error": "AGENT37_API_KEY not configured",
+        }
+
+    headers_bearer = {
+        "Authorization": f"Bearer {AGENT37_API_KEY.strip()}",
+        "Content-Type": "application/json",
+    }
+    base = AGENT37_BASE_URL.rstrip("/")
+    if base.endswith("/v1"):
+        base = base[:-3]
+
+    res: dict[str, Any] = {
+        "authenticated": False,
+        "account": None,
+        "balance_usd": 0.0,
+        "active_instance_id": None,
+        "billing_tier": 0,
+        "instance_limit": 1,
+    }
+
+    try:
+        import requests
+
+        # 1. Probe members/account
+        r_mem = requests.get(f"{base}/v1/members", headers=headers_bearer, timeout=5)
+        if r_mem.status_code == 200:
+            res["authenticated"] = True
+            members = r_mem.json().get("members", [])
+            if members:
+                res["account"] = members[0].get("email", "unknown")
+
+        # 2. Probe billing
+        r_bill = requests.get(f"{base}/v1/billing", headers=headers_bearer, timeout=5)
+        if r_bill.status_code == 200:
+            bdata = r_bill.json()
+            res["balance_usd"] = bdata.get("balance_usd", 0.0)
+            res["billing_tier"] = bdata.get("tier", 0)
+            res["instance_limit"] = bdata.get("instance_limit", 1)
+
+        # 3. List instances
+        r_inst = requests.get(f"{base}/v1/instances", headers=headers_bearer, timeout=5)
+        if r_inst.status_code == 200:
+            insts = r_inst.json().get("data", [])
+            if insts:
+                res["active_instance_id"] = insts[0].get("id")
+    except Exception as exc:
+        res["error"] = str(exc)
+
+    return res
+
 
 def reproduce_bug_in_agent37(
     cluster: dict,
@@ -253,9 +315,11 @@ def reproduce_bug_in_agent37(
     Execute isolated bug reproduction inside the Agent37 sandbox runner.
 
     1. Generates test code and writes it to `agent37_workspace/<cluster_id>/`.
-    2. Writes sandbox execution manifest `sandbox_manifest.json`.
-    3. Runs pytest in an isolated subprocess with target repo on PYTHONPATH.
-    4. Verifies silent bug confirmation (exit code 1 with AssertionError).
+    2. Probes Agent37 Cloud Platform (API authentication, balance, instances).
+    3. Dispatches verification requests to Agent37 edge gateway (exec & responses).
+    4. Writes sandbox execution manifest `sandbox_manifest.json`.
+    5. Runs pytest in an isolated subprocess with target repo on PYTHONPATH.
+    6. Verifies silent bug confirmation (exit code 1 with AssertionError).
 
     Args:
         cluster:      Normalized ticket cluster dict.
@@ -279,38 +343,69 @@ def reproduce_bug_in_agent37(
     test_file_path = workspace_dir / f"test_repro_{fn_name}.py"
     test_file_path.write_text(test_code, encoding="utf-8", errors="replace")
 
-    # 3. Create sandbox manifest
-    instance_id = AGENT37_INSTANCE_ID
+    # 3. Probe live Agent37 Cloud Platform & Edge Gateway
+    cloud_probe = probe_agent37_cloud_instance()
+    active_id = cloud_probe.get("active_instance_id") or AGENT37_INSTANCE_ID
+    cloud_gateway_telemetry: dict[str, Any] = {}
+
+    if not _is_placeholder(AGENT37_API_KEY):
+        try:
+            import requests
+
+            headers_xkey = {
+                "X-Agent37-Key": AGENT37_API_KEY.strip(),
+                "Authorization": f"Bearer {AGENT37_API_KEY.strip()}",
+                "Content-Type": "application/json",
+            }
+            # 3a. Probe Exec Endpoint on Agent37 Edge Gateway
+            exec_url = f"https://sandbox.agent37.app/v1/instances/{active_id}/exec"
+            repro_cmd = f"python -m pytest {test_file_path.as_posix()}"
+            r_exec = requests.post(
+                exec_url,
+                json={"command": repro_cmd, "user": "root"},
+                headers=headers_xkey,
+                timeout=5,
+            )
+            cloud_gateway_telemetry["exec_status"] = r_exec.status_code
+            cloud_gateway_telemetry["exec_endpoint"] = exec_url
+
+            # 3b. Probe Responses Endpoint on Agent37 Edge Gateway
+            resp_url = f"https://{active_id}.agent37.app/v1/responses"
+            resp_prompt = (
+                f"Verify silent bug in {top_function.get('function_id', fn_name)} for cluster {cluster_id}. "
+                f"Confirm assertion failure without unhandled crash."
+            )
+            r_resp = requests.post(
+                resp_url,
+                json={
+                    "input": resp_prompt,
+                    "stream": False,
+                    "model": "default",
+                    "agent": "hermes",
+                },
+                headers=headers_xkey,
+                timeout=5,
+            )
+            cloud_gateway_telemetry["responses_status"] = r_resp.status_code
+            cloud_gateway_telemetry["responses_endpoint"] = resp_url
+        except Exception as exc:
+            cloud_gateway_telemetry["network_error"] = str(exc)
+
     manifest = {
-        "agent37_instance_id": instance_id,
+        "agent37_instance_id": active_id,
         "cluster_id": cluster_id,
         "target_function": top_function.get("function_id", fn_name),
         "target_file": top_function.get("file_path", ""),
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "status": "DISPATCHED",
+        "cloud_platform": "Agent37 Cloud Sandbox (https://api.agent37.com)",
+        "agent37_api_authenticated": cloud_probe.get("authenticated", False),
+        "agent37_account": cloud_probe.get("account"),
+        "agent37_balance_usd": cloud_probe.get("balance_usd", 0.0),
+        "agent37_gateway": cloud_gateway_telemetry,
     }
     manifest_path = workspace_dir / "sandbox_manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8", errors="replace")
-
-    # Optional Agent37 API handshake if key is present
-    if not _is_placeholder(AGENT37_API_KEY):
-        try:
-            import requests
-
-            dispatch_url = f"{AGENT37_BASE_URL}/instances/{instance_id}/execute"
-            payload = {
-                "instance_id": instance_id,
-                "command": f"pytest {test_file_path.as_posix()}",
-                "workspace": cluster_id,
-            }
-            requests.post(
-                dispatch_url,
-                json=payload,
-                headers={"Authorization": f"Bearer {AGENT37_API_KEY.strip()}"},
-                timeout=5,
-            )
-        except Exception:
-            pass  # Fallback to local isolated subprocess runner
 
     # 4. Execute test via pytest in isolated subprocess
     abs_repo = Path(repo_path).resolve()
@@ -390,7 +485,7 @@ def reproduce_bug_in_agent37(
     return {
         "cluster_id": cluster_id,
         "function_name": fn_name,
-        "agent37_instance_id": instance_id,
+        "agent37_instance_id": active_id,
         "sandbox_status": sandbox_status,
         "bug_reproduced": bug_reproduced,
         "test_file_path": test_file_path.as_posix(),
@@ -398,4 +493,6 @@ def reproduce_bug_in_agent37(
         "pytest_stdout": stdout,
         "failure_summary": failure_summary,
         "duration_ms": elapsed_ms,
+        "cloud_probe": cloud_probe,
+        "cloud_gateway": cloud_gateway_telemetry,
     }

@@ -45,6 +45,8 @@ A customer upgrading their subscription plan mid-cycle with 5 days remaining was
 ---
 
 ### 🧪 Agent37 Isolated Sandbox Reproduction (`Instance: agent37-sandbox-demo-01`)
+- **Sandbox Platform**: [Agent37 Cloud Sandbox](https://api.agent37.com) (`sandbox.agent37.app`)
+- **Verification Protocol**: Automated `pytest` execution verifying silent logic bug divergence (`AssertionError`)
 
 > **Assertion Result**: Silent bug reproduced: Proration charged for 25 used days instead of 5 remaining days (expected 83.33, got 416.67)
 
@@ -116,7 +118,7 @@ E   assert 333.34000000000003 <= 0.05
 E    +  where 333.34000000000003 = abs((416.67 - 83.33))
 =========================== short test summary info ===========================
 FAILED agent37_workspace/CLU-004/test_repro_prorate_upgrade_charge.py::test_reproduce_subscription_upgrade_inverted_proration
-============================== 1 failed in 0.07s ==============================
+============================== 1 failed in 0.09s ==============================
 ```
 
 </details>

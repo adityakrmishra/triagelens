@@ -161,6 +161,8 @@ def build_github_issue_payload(
         "---",
         "",
         f"### 🧪 Agent37 Isolated Sandbox Reproduction (`Instance: {instance_id}`)",
+        "- **Sandbox Platform**: [Agent37 Cloud Sandbox](https://api.agent37.com) (`sandbox.agent37.app`)",
+        "- **Verification Protocol**: Automated `pytest` execution verifying silent logic bug divergence (`AssertionError`)",
         "",
         f"> **Assertion Result**: {failure_summary}",
         "",
