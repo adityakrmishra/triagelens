@@ -275,18 +275,26 @@ def main() -> None:
         subprocess.run(["git", "commit", "-m", commit_msg], cwd=str(PROJECT_ROOT), check=True)
         print(f"  [OK] Committed: {commit_msg}")
 
-        push_res = subprocess.run(["git", "push", "origin", "main"], cwd=str(PROJECT_ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace")
+        push_res = subprocess.run(
+            "git push origin main",
+            cwd=str(PROJECT_ROOT),
+            shell=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
         if push_res.returncode == 0:
             print("  [OK] Successfully pushed updated manifests to GitHub origin/main!")
         else:
-            print(f"  [WARN] Git push output: {push_res.stderr}")
+            print(f"  [WARN] Git push output: {push_res.stderr.strip() or push_res.stdout.strip()}")
     else:
         # Commit the script itself if untracked
-        subprocess.run(["git", "add", "scripts/provision_and_run_agent37.py"], cwd=str(PROJECT_ROOT))
-        diff_cached = subprocess.run(["git", "diff", "--cached", "--name-only"], cwd=str(PROJECT_ROOT), capture_output=True, text=True).stdout.strip()
+        subprocess.run("git add scripts/provision_and_run_agent37.py", cwd=str(PROJECT_ROOT), shell=True)
+        diff_cached = subprocess.run("git diff --cached --name-only", cwd=str(PROJECT_ROOT), shell=True, capture_output=True, text=True).stdout.strip()
         if diff_cached:
-            subprocess.run(["git", "commit", "-m", "feat(agent37): add automated cloud sandbox provisioner script"], cwd=str(PROJECT_ROOT), check=True)
-            subprocess.run(["git", "push", "origin", "main"], cwd=str(PROJECT_ROOT), check=True)
+            subprocess.run(["git", "commit", "-m", "feat(agent37): add automated cloud sandbox provisioner script"], cwd=str(PROJECT_ROOT), shell=True, check=True)
+            subprocess.run("git push origin main", cwd=str(PROJECT_ROOT), shell=True, check=True)
             print("  [OK] Committed and pushed scripts/provision_and_run_agent37.py to GitHub!")
         else:
             print("  [OK] Working tree clean. Everything already up-to-date on GitHub.")
