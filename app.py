@@ -276,7 +276,7 @@ with st.sidebar:
 
     agent37_inst = st.text_input(
         "Agent37 Instance ID",
-        value=os.getenv("AGENT37_INSTANCE_ID", "agent37-sandbox-demo-01"),
+        value=os.getenv("AGENT37_INSTANCE_ID", "vsaotlwmjm"),
     )
     gh_repo = st.text_input(
         "GitHub Repository",

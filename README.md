@@ -261,7 +261,7 @@ Open `http://localhost:8501` in your browser:
 ---
 
 ### 5. Run the Standalone Agent37 Cloud Sandbox Runner
-For remote execution inside the **Agent37 Cloud Sandbox** (`agent37.com/personal`):
+For remote execution inside the **Agent37 Cloud Sandbox** (Live Instance: `vsaotlwmjm` on `api.agent37.com`):
 ```bash
 python scripts/agent37_cloud_entry.py
 ```
@@ -269,9 +269,9 @@ This standalone script runs with zero external pip dependencies, writes the targ
 
 ---
 
-## 🎯 Verification Matrix
+## 🎯 Verification Matrix (Live Instance: `vsaotlwmjm`)
 
-| Cluster | Dupes | Priority | Target Function | Code Issue | Suggested Owner | Commit | Agent37 Status |
+| Cluster | Dupes | Priority | Target Function | Code Issue | Suggested Owner | Commit | Agent37 Sandbox (`vsaotlwmjm`) |
 |:---:|:---:|:---:|:---|:---|:---|:---:|:---:|
 | `CLU-001` | 3 | **P0** | `apply_promo()` | `if has_sale_item: return total` | `@aarav-payments` | `e2b8ec1` | `CONFIRMED_SILENT_BUG` |
 | `CLU-002` | 2 | **P0** | `resolve_free_shipping()` | `if subtotal > threshold:` (strict `>`) | `@priya-checkout` | `83227cc` | `CONFIRMED_SILENT_BUG` |

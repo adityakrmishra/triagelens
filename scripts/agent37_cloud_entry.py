@@ -27,7 +27,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # Configuration & Sandbox Metadata
 # ---------------------------------------------------------------------------
-AGENT37_INSTANCE_ID = os.getenv("AGENT37_INSTANCE_ID", "agent37-sandbox-demo-01")
+AGENT37_INSTANCE_ID = os.getenv("AGENT37_INSTANCE_ID", "vsaotlwmjm")
 TIMESTAMP = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 HOSTNAME = socket.gethostname()
 PLATFORM = f"{platform.system()} {platform.release()} ({platform.machine()})"

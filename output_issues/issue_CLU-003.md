@@ -9,7 +9,7 @@
 | **Priority Escalation** | **`P0`** (2 duplicate reports with critical billing/auth keywords (impact score: 20). Escalated to P0.) |
 | **Customer Reports** | `2` duplicate complaint(s) grouped |
 | **Suggested Code Owner** | **@rohan-auth** (Rohan Verma &lt;rohan@shopflow.io&gt;) |
-| **Agent37 Sandbox Status** | **`CONFIRMED_SILENT_BUG`** (Instance `agent37-sandbox-demo-01`) |
+| **Agent37 Sandbox Status** | **`CONFIRMED_SILENT_BUG`** (Instance `vsaotlwmjm`) |
 
 ---
 
@@ -44,7 +44,7 @@ Users attempting passwordless authentication report one-time magic links expire 
 
 ---
 
-### 🧪 Agent37 Isolated Sandbox Reproduction (`Instance: agent37-sandbox-demo-01`)
+### 🧪 Agent37 Isolated Sandbox Reproduction (`Instance: vsaotlwmjm`)
 - **Sandbox Platform**: [Agent37 Cloud Sandbox](https://api.agent37.com) (`sandbox.agent37.app`)
 - **Verification Protocol**: Automated `pytest` execution verifying silent logic bug divergence (`AssertionError`)
 
@@ -113,7 +113,7 @@ E   AssertionError: Silent bug reproduced: Magic link expired after 30 seconds i
 E   assert False is True
 =========================== short test summary info ===========================
 FAILED agent37_workspace/CLU-003/test_repro_check_magic_link_expiry.py::test_reproduce_magic_link_premature_expiry
-============================== 1 failed in 0.08s ==============================
+============================== 1 failed in 0.46s ==============================
 ```
 
 </details>

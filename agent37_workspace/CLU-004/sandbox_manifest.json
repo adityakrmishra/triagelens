@@ -1,20 +1,19 @@
 {
-  "agent37_instance_id": "agent37-sandbox-demo-01",
+  "agent37_instance_id": "vsaotlwmjm",
   "cluster_id": "CLU-004",
   "target_function": "shopflow/subscriptions.py::prorate_upgrade_charge",
   "target_file": "shopflow/subscriptions.py",
-  "timestamp": "2026-10-24T13:50:02.863342+00:00",
+  "timestamp": "2026-10-24T14:13:55.821802+00:00",
   "status": "CONFIRMED_SILENT_BUG",
   "cloud_platform": "Agent37 Cloud Sandbox (https://api.agent37.com)",
   "agent37_api_authenticated": true,
   "agent37_account": "cjrcoder@gmail.com",
   "agent37_balance_usd": 0,
   "agent37_gateway": {
-    "exec_status": 404,
-    "exec_endpoint": "https://sandbox.agent37.app/v1/instances/agent37-sandbox-demo-01/exec",
-    "responses_status": 404,
-    "responses_endpoint": "https://agent37-sandbox-demo-01.agent37.app/v1/responses"
+    "exec_status": 200,
+    "exec_endpoint": "https://sandbox.agent37.app/v1/instances/vsaotlwmjm/exec",
+    "network_error": "HTTPSConnectionPool(host='vsaotlwmjm.agent37.app', port=443): Read timed out. (read timeout=5)"
   },
   "bug_reproduced": true,
-  "duration_ms": 2856
+  "duration_ms": 8044
 }

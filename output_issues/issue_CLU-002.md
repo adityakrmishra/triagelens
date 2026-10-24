@@ -9,7 +9,7 @@
 | **Priority Escalation** | **`P0`** (2 duplicate reports with critical billing/auth keywords (impact score: 29). Escalated to P0.) |
 | **Customer Reports** | `2` duplicate complaint(s) grouped |
 | **Suggested Code Owner** | **@priya-checkout** (Priya Nair &lt;priya@shopflow.io&gt;) |
-| **Agent37 Sandbox Status** | **`CONFIRMED_SILENT_BUG`** (Instance `agent37-sandbox-demo-01`) |
+| **Agent37 Sandbox Status** | **`CONFIRMED_SILENT_BUG`** (Instance `vsaotlwmjm`) |
 
 ---
 
@@ -44,7 +44,7 @@ Multiple high-value VIP customers report that entering the VIP25 promo code leav
 
 ---
 
-### 🧪 Agent37 Isolated Sandbox Reproduction (`Instance: agent37-sandbox-demo-01`)
+### 🧪 Agent37 Isolated Sandbox Reproduction (`Instance: vsaotlwmjm`)
 - **Sandbox Platform**: [Agent37 Cloud Sandbox](https://api.agent37.com) (`sandbox.agent37.app`)
 - **Verification Protocol**: Automated `pytest` execution verifying silent logic bug divergence (`AssertionError`)
 
@@ -114,7 +114,7 @@ E   AssertionError: Silent bug reproduced: Boundary order of exact 1000.0 charge
 E   assert 99.0 == 0.0
 =========================== short test summary info ===========================
 FAILED agent37_workspace/CLU-002/test_repro_resolve_free_shipping.py::test_reproduce_free_shipping_boundary_condition
-============================== 1 failed in 0.08s ==============================
+============================== 1 failed in 0.12s ==============================
 ```
 
 </details>

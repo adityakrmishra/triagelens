@@ -9,7 +9,7 @@
 | **Priority Escalation** | **`P1`** (Single ticket but contains critical billing/auth keywords (impact score: 24). Assigned P1 (High).) |
 | **Customer Reports** | `1` duplicate complaint(s) grouped |
 | **Suggested Code Owner** | **@sneha-billing** (Sneha Patel &lt;sneha@shopflow.io&gt;) |
-| **Agent37 Sandbox Status** | **`CONFIRMED_SILENT_BUG`** (Instance `agent37-sandbox-demo-01`) |
+| **Agent37 Sandbox Status** | **`CONFIRMED_SILENT_BUG`** (Instance `vsaotlwmjm`) |
 
 ---
 
@@ -44,7 +44,7 @@ A customer upgrading their subscription plan mid-cycle with 5 days remaining was
 
 ---
 
-### 🧪 Agent37 Isolated Sandbox Reproduction (`Instance: agent37-sandbox-demo-01`)
+### 🧪 Agent37 Isolated Sandbox Reproduction (`Instance: vsaotlwmjm`)
 - **Sandbox Platform**: [Agent37 Cloud Sandbox](https://api.agent37.com) (`sandbox.agent37.app`)
 - **Verification Protocol**: Automated `pytest` execution verifying silent logic bug divergence (`AssertionError`)
 
@@ -118,7 +118,7 @@ E   assert 333.34000000000003 <= 0.05
 E    +  where 333.34000000000003 = abs((416.67 - 83.33))
 =========================== short test summary info ===========================
 FAILED agent37_workspace/CLU-004/test_repro_prorate_upgrade_charge.py::test_reproduce_subscription_upgrade_inverted_proration
-============================== 1 failed in 0.09s ==============================
+============================== 1 failed in 0.08s ==============================
 ```
 
 </details>

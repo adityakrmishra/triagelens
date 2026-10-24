@@ -21,7 +21,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 API_KEY = os.getenv("AGENT37_API_KEY", "").strip()
 BASE_URL = os.getenv("AGENT37_BASE_URL", "https://api.agent37.com").rstrip("/")
-INSTANCE_ID = os.getenv("AGENT37_INSTANCE_ID", "agent37-sandbox-demo-01").strip()
+INSTANCE_ID = os.getenv("AGENT37_INSTANCE_ID", "vsaotlwmjm").strip()
 
 if not API_KEY or API_KEY.startswith("your_"):
     print("[ERROR] AGENT37_API_KEY is missing or set to placeholder in .env")

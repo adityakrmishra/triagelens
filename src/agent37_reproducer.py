@@ -32,7 +32,7 @@ load_dotenv()
 # Configuration
 # ---------------------------------------------------------------------------
 AGENT37_API_KEY = os.getenv("AGENT37_API_KEY", "")
-AGENT37_INSTANCE_ID = os.getenv("AGENT37_INSTANCE_ID", "agent37-sandbox-demo-01")
+AGENT37_INSTANCE_ID = os.getenv("AGENT37_INSTANCE_ID", "vsaotlwmjm")
 AGENT37_BASE_URL = os.getenv("AGENT37_BASE_URL", "https://api.agent37.com/v1").rstrip("/")
 
 
@@ -351,7 +351,7 @@ def reproduce_bug_in_agent37(
 
     # 3. Probe live Agent37 Cloud Platform & Edge Gateway
     cloud_probe = probe_agent37_cloud_instance()
-    active_id = cloud_probe.get("active_instance_id") or AGENT37_INSTANCE_ID
+    active_id = os.getenv("AGENT37_INSTANCE_ID", "").strip() or cloud_probe.get("active_instance_id") or AGENT37_INSTANCE_ID
     cloud_gateway_telemetry: dict[str, Any] = {}
 
     if not _is_placeholder(AGENT37_API_KEY):
@@ -370,7 +370,7 @@ def reproduce_bug_in_agent37(
                 exec_url,
                 json={"command": repro_cmd, "user": "root"},
                 headers=headers_xkey,
-                timeout=5,
+                timeout=15,
             )
             cloud_gateway_telemetry["exec_status"] = r_exec.status_code
             cloud_gateway_telemetry["exec_endpoint"] = exec_url
@@ -387,10 +387,9 @@ def reproduce_bug_in_agent37(
                     "input": resp_prompt,
                     "stream": False,
                     "model": "default",
-                    "agent": "hermes",
                 },
                 headers=headers_xkey,
-                timeout=5,
+                timeout=20,
             )
             cloud_gateway_telemetry["responses_status"] = r_resp.status_code
             cloud_gateway_telemetry["responses_endpoint"] = resp_url

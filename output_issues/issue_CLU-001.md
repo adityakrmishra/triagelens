@@ -9,7 +9,7 @@
 | **Priority Escalation** | **`P0`** (3 duplicate complaints filed. Business impact score: 31. Immediate escalation required.) |
 | **Customer Reports** | `3` duplicate complaint(s) grouped |
 | **Suggested Code Owner** | **@aarav-payments** (Aarav Sharma &lt;aarav@shopflow.io&gt;) |
-| **Agent37 Sandbox Status** | **`CONFIRMED_SILENT_BUG`** (Instance `agent37-sandbox-demo-01`) |
+| **Agent37 Sandbox Status** | **`CONFIRMED_SILENT_BUG`** (Instance `vsaotlwmjm`) |
 
 ---
 
@@ -44,7 +44,7 @@ Multiple high-value VIP customers report that entering the VIP25 promo code leav
 
 ---
 
-### 🧪 Agent37 Isolated Sandbox Reproduction (`Instance: agent37-sandbox-demo-01`)
+### 🧪 Agent37 Isolated Sandbox Reproduction (`Instance: vsaotlwmjm`)
 - **Sandbox Platform**: [Agent37 Cloud Sandbox](https://api.agent37.com) (`sandbox.agent37.app`)
 - **Verification Protocol**: Automated `pytest` execution verifying silent logic bug divergence (`AssertionError`)
 
@@ -116,7 +116,7 @@ E   AssertionError: Silent bug reproduced: VIP25 promo ignored when has_sale_ite
 E   assert 2000.0 == 1500.0
 =========================== short test summary info ===========================
 FAILED agent37_workspace/CLU-001/test_repro_apply_promo.py::test_reproduce_vip25_silent_failure_on_sale_item
-============================== 1 failed in 0.13s ==============================
+============================== 1 failed in 0.08s ==============================
 ```
 
 </details>
