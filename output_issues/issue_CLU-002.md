@@ -114,7 +114,7 @@ E   AssertionError: Silent bug reproduced: Boundary order of exact 1000.0 charge
 E   assert 99.0 == 0.0
 =========================== short test summary info ===========================
 FAILED agent37_workspace/CLU-002/test_repro_resolve_free_shipping.py::test_reproduce_free_shipping_boundary_condition
-============================== 1 failed in 0.09s ==============================
+============================== 1 failed in 0.07s ==============================
 ```
 
 </details>
