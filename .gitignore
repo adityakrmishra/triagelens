@@ -4,4 +4,4 @@ __pycache__/
 chroma_db/
 .pytest_cache/
 agent37_sandbox_run/
-.streamlit/
+.streamlit/secrets.toml
