@@ -14,36 +14,23 @@ from pathlib import Path
 from typing import Any
 
 import streamlit as st
-from dotenv import load_dotenv
 
-# Ensure project root is on sys.path
-PROJECT_ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(PROJECT_ROOT))
-
-from src.ast_indexer import index_repository, search_suspect_functions
-from src.ticket_cluster import normalize_ticket, cluster_tickets, parse_tickets_payload
-from src.git_blame import suggest_owner_from_blame
-from src.llm_reasoner import explain_matches_and_summarize
-from src.agent37_reproducer import (
-    reproduce_bug_in_agent37,
-    test_hot_patch_in_sandbox,
-    load_target_file_content,
-)
-from src.github_issue import build_github_issue_payload, publish_github_issue
-from scripts.setup_demo_repo import setup_repository
-
-# Load environment defaults
-load_dotenv()
-
-# ---------------------------------------------------------------------------
-# Page Configuration & Styling
-# ---------------------------------------------------------------------------
+# MUST BE THE VERY FIRST EXECUTABLE STREAMLIT COMMAND
 st.set_page_config(
     page_title="TriageLens | Autonomous Silent-Bug Triage",
     page_icon="🔭",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+from dotenv import load_dotenv
+
+# Ensure project root is on sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+# Load environment defaults
+load_dotenv()
 
 # Custom Sleek Dark-Theme CSS
 st.markdown(
@@ -108,6 +95,9 @@ st.markdown(
 @st.cache_resource(show_spinner=False)
 def ensure_repo_and_index():
     """Ensure demo target repo exists and index functions into ChromaDB once."""
+    from scripts.setup_demo_repo import setup_repository
+    from src.ast_indexer import index_repository
+
     repo_path = PROJECT_ROOT / "demo_target_repo"
     if not (repo_path / "shopflow" / "pricing.py").exists():
         setup_repository(str(repo_path))
@@ -117,7 +107,14 @@ def ensure_repo_and_index():
     return str(repo_path), persist_dir, len(functions)
 
 
-repo_path_str, chroma_dir_str, indexed_fn_count = ensure_repo_and_index()
+repo_path_str = str(PROJECT_ROOT / "demo_target_repo")
+chroma_dir_str = str(PROJECT_ROOT / "chroma_db")
+indexed_fn_count = 0
+
+try:
+    repo_path_str, chroma_dir_str, indexed_fn_count = ensure_repo_and_index()
+except Exception as e:
+    st.error(f"AI Engine Boot Error: {e}")
 
 # ---------------------------------------------------------------------------
 # Session State Initialization
@@ -144,6 +141,8 @@ if "published_issues" not in st.session_state:
 
 # Compute clusters whenever raw tickets change
 def compute_clusters():
+    from src.ticket_cluster import normalize_ticket, cluster_tickets, parse_tickets_payload
+
     raw = st.session_state["raw_tickets"]
     parsed = parse_tickets_payload(raw)
     normalized = [normalize_ticket(t) for t in parsed]
@@ -162,6 +161,11 @@ def get_or_run_cluster_analysis(cluster: dict) -> dict[str, Any]:
     cid = cluster["cluster_id"]
     if cid in st.session_state["cluster_cache"]:
         return st.session_state["cluster_cache"][cid]
+
+    from src.ast_indexer import search_suspect_functions
+    from src.git_blame import suggest_owner_from_blame
+    from src.llm_reasoner import explain_matches_and_summarize
+    from src.agent37_reproducer import reproduce_bug_in_agent37
 
     query = cluster["combined_cluster_query"]
     matches = search_suspect_functions(query, top_k=3, persist_dir=chroma_dir_str)
@@ -212,6 +216,8 @@ with st.sidebar:
     )
     if uploaded_file is not None:
         try:
+            from src.ticket_cluster import parse_tickets_payload
+
             content = json.load(uploaded_file)
             st.session_state["raw_tickets"] = parse_tickets_payload(content)
             st.session_state["cluster_cache"] = {}
@@ -294,6 +300,8 @@ with st.sidebar:
     )
 
     if st.button("Re-Index Target Repo AST"):
+        from src.ast_indexer import index_repository
+
         persist_dir = str(PROJECT_ROOT / "chroma_db")
         funcs = index_repository(repo_path=repo_path_str, persist_dir=persist_dir)
         st.session_state["cluster_cache"] = {}
@@ -316,10 +324,15 @@ p0_count = sum(1 for c in clusters if c.get("priority") == "P0")
 p1_count = sum(1 for c in clusters if c.get("priority") == "P1")
 
 # Pre-fetch analyses for KPIs
-all_analyses = [get_or_run_cluster_analysis(c) for c in clusters]
-repro_count = sum(1 for a in all_analyses if a["repro_result"].get("bug_reproduced"))
+all_analyses = []
+try:
+    all_analyses = [get_or_run_cluster_analysis(c) for c in clusters]
+except Exception as exc:
+    st.error(f"Cluster Analysis Error: {exc}")
+
+repro_count = sum(1 for a in all_analyses if a.get("repro_result", {}).get("bug_reproduced"))
 avg_confidence = (
-    sum(a["matches"][0].get("similarity_score", 0.0) for a in all_analyses if a["matches"]) / len(all_analyses)
+    sum(a["matches"][0].get("similarity_score", 0.0) for a in all_analyses if a.get("matches")) / len(all_analyses)
     if all_analyses
     else 0.0
 )
@@ -501,6 +514,12 @@ if selected_label:
     # TAB 3: Agent37 Isolated Sandbox Bug Reproduction
     # -----------------------------------------------------------------------
     with tab3:
+        from src.agent37_reproducer import (
+            reproduce_bug_in_agent37,
+            test_hot_patch_in_sandbox,
+            load_target_file_content,
+        )
+
         st.markdown("#### 🧪 Agent37 Isolated Cloud Sandbox Bug Reproduction")
         cloud_p = repro.get("cloud_probe", {})
         if cloud_p and cloud_p.get("authenticated"):
@@ -623,6 +642,8 @@ if selected_label:
     # TAB 4: Tickets & 1-Click GitHub Issue Publisher
     # -----------------------------------------------------------------------
     with tab4:
+        from src.github_issue import build_github_issue_payload, publish_github_issue
+
         st.markdown("#### 📑 Grouped Customer Support Tickets in this Cluster")
         ticket_table_data = [
             {
