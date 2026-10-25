@@ -1,0 +1,25 @@
+question,answer
+"VIP25 promo code not working when sale item is in cart. I have an active VIP account. When I add clearance items to cart and enter VIP25 at checkout, the promo code shows applied on the interface but the cart total remains $2,000 without any discount.","Target Function: shopflow/pricing.py::apply_promo (Lines: L41-L82)
+Root Cause: Function returns early when has_sale_item is True ('if has_sale_item: return round(cart_total, 2)'), bypassing the 25% discount calculation.
+Recommended Fix: Modify condition to allow VIP overrides: 'if has_sale_item and not (is_vip and promo_code == ""VIP25""): return round(cart_total, 2)'."
+VIP discount code shows applied but price never changes on sale section. Customer applied VIP25 on checkout with mixed cart. UI gave checkmark but bill was unchanged.,"Target Function: shopflow/pricing.py::apply_promo (Lines: L41-L82)
+Root Cause: Early exit on sale items blocks VIP promo code branch.
+Recommended Fix: Evaluate VIP discount rate before checking sale exclusion or scope exclusion to sale items only."
+VIP25 coupon silently ignored on carts containing any sale or discounted product. Order total not reduced.,"Target Function: shopflow/pricing.py::apply_promo (Lines: L41-L82)
+Root Cause: Cart-level flag has_sale_item disables promo across the entire cart total.
+Recommended Fix: Apply promo to non-sale line items or permit VIP override."
+Charged ₹99 shipping even though my cart was exactly ₹1000 — free shipping promised on orders of ₹1000 or more. My order subtotal was 1000 and standard shipping fee was still added at payment.,"Target Function: shopflow/checkout.py::resolve_free_shipping (Lines: L45-L79)
+Root Cause: Strict inequality check 'if cart_subtotal > threshold' fails on boundary order of exactly threshold value.
+Recommended Fix: Change operator from '>' to '>=': 'if cart_subtotal >= threshold: return 0.0'."
+Free shipping threshold not applied on exactly ₹1000 order value. Delivery charges still appearing on checkout.,"Target Function: shopflow/checkout.py::resolve_free_shipping (Lines: L45-L79)
+Root Cause: Boundary condition evaluates strictly greater than threshold.
+Recommended Fix: Use 'if cart_subtotal >= threshold: return 0.0'."
+Magic link login says 'Link Expired' just 30 seconds after I received the email. Passwordless authentication fails repeatedly on production.,"Target Function: shopflow/auth_session.py::check_magic_link_expiry (Lines: L34-L70)
+Root Cause: Unit mismatch comparing elapsed seconds directly against ttl_minutes without multiplying by 60.
+Recommended Fix: Multiply ttl_minutes by 60: 'elapsed_time <= ttl_minutes * 60'."
+Passwordless login token immediately invalid upon delivery. User receives link and clicks within 45 seconds but auth endpoint rejects token as expired.,"Target Function: shopflow/auth_session.py::check_magic_link_expiry (Lines: L34-L70)
+Root Cause: Token age in seconds compared against minute value without conversion factor.
+Recommended Fix: Compare 'current_epoch - issued_at_epoch <= ttl_minutes * 60'."
+Upgrading plan with 5 days left charged me for 25 days — billing is wrong. Mid-cycle subscription upgrade inverted proration math.,"Target Function: shopflow/subscriptions.py::prorate_upgrade_charge (Lines: L13-L61)
+Root Cause: Inverted proration calculation computes 'days_used = billing_cycle_days - days_remaining' and charges for elapsed period.
+Recommended Fix: Charge for remaining days: 'price_difference * (days_remaining / billing_cycle_days)'."

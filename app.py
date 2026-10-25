@@ -687,6 +687,14 @@ with st.sidebar:
         type="password",
         help="Paste a personal access token with 'repo' scope to publish live issues",
     )
+    adaption_key = st.text_input(
+        "Adaption API Key",
+        value=os.getenv("ADAPTION_API_KEY", ""),
+        type="password",
+        help="API key for Adaption Adaptive Data & Continual Learning Pipeline",
+    )
+    if adaption_key:
+        os.environ["ADAPTION_API_KEY"] = adaption_key
 
     if st.button("Re-Index Target Repo AST"):
         with st.spinner("Re-indexing AST nodes into ChromaDB..."):
@@ -1045,6 +1053,77 @@ if selected_label:
             st.markdown(issue_payload["body"])
         else:
             st.code(f"# {issue_payload['title']}\n\n{issue_payload['body']}", language="markdown")
+
+        st.markdown("---")
+        st.markdown("#### Adaptive Data Pipeline (Adaption SDK — Ticket-to-AST Dataset Generation)")
+        st.caption("Continual learning pipeline that standardizes raw customer-ticket-to-code triage pairs into model-ready instruction datasets.")
+
+        import pandas as pd
+        from src.adaption_pipeline import (
+            generate_triage_training_csv,
+            generate_local_adapted_dataset,
+            run_adaption_data_pipeline,
+        )
+
+        training_data_file = PROJECT_ROOT / "data" / "triage_training_data.csv"
+        if not training_data_file.exists():
+            generate_triage_training_csv(str(training_data_file), project_root=PROJECT_ROOT)
+
+        adapted_data_file = PROJECT_ROOT / "data" / "triage_adapted_dataset.csv"
+        if not adapted_data_file.exists():
+            generate_local_adapted_dataset(str(training_data_file), str(adapted_data_file), project_root=PROJECT_ROOT)
+
+        st.markdown("##### Raw Ticket-to-AST Training Pairs")
+        raw_df = pd.read_csv(training_data_file, encoding="utf-8")
+        st.dataframe(raw_df, use_container_width=True, height=200)
+
+        ad_col1, ad_col2 = st.columns(2)
+        with ad_col1:
+            if st.button("Estimate Credit Cost (Adaption SDK)", use_container_width=True, key="btn_adaption_estimate"):
+                with st.spinner("Querying Adaption API for credit estimation..."):
+                    est_res = run_adaption_data_pipeline(
+                        csv_path="data/triage_training_data.csv",
+                        run_full_adapt=False,
+                        api_key=adaption_key,
+                    )
+                    st.session_state["adaption_estimate_res"] = est_res
+
+        with ad_col2:
+            if st.button("Run Adaptive Data Cleaning & Export CSV", type="primary", use_container_width=True, key="btn_adaption_run"):
+                with st.spinner("Processing dataset via Adaption Pipeline..."):
+                    run_res = run_adaption_data_pipeline(
+                        csv_path="data/triage_training_data.csv",
+                        run_full_adapt=True,
+                        api_key=adaption_key,
+                    )
+                    st.session_state["adaption_run_res"] = run_res
+
+        est_state = st.session_state.get("adaption_estimate_res")
+        if est_state:
+            st.info(
+                f"Dataset ID: `{est_state.get('dataset_id')}` | Estimated Credits Consumed: `{est_state.get('estimated_credits')}` | "
+                f"Estimated Duration: `{est_state.get('estimated_minutes')} min` | Mode: `{est_state.get('mode')}`"
+            )
+
+        run_state = st.session_state.get("adaption_run_res")
+        if run_state:
+            st.success(
+                f"Dataset adapted successfully: `{run_state.get('dataset_id')}` (Mode: `{run_state.get('mode')}`). "
+                f"Ready for model fine-tuning and continual learning."
+            )
+
+        if adapted_data_file.exists():
+            st.markdown("##### Cleaned & Adapted Model-Ready Dataset")
+            adapted_df = pd.read_csv(adapted_data_file, encoding="utf-8")
+            st.dataframe(adapted_df, use_container_width=True, height=220)
+
+            st.download_button(
+                label="Download Adapted Dataset (CSV)",
+                data=adapted_data_file.read_bytes(),
+                file_name="triage_adapted_dataset.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
 
     with tab5:
         st.markdown("### Architecture & Market Fit")
