@@ -1,12 +1,5 @@
 """
-src/github_issue.py
--------------------
-GitHub Issue formatter and publisher for TriageLens.
-
-Transforms triaged cluster metadata, AST search rankings, git blame signals,
-LLM reasoning, and Agent37 sandboxed reproduction artifacts into an
-executive-grade GitHub Issue and publishes it via the GitHub REST API
-(or persists a formatted Markdown artifact locally).
+GitHub Issue formatter and publisher for triaged bug clusters.
 """
 
 from __future__ import annotations
@@ -18,28 +11,19 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
-# ---------------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------------
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
 GITHUB_REPO = os.getenv("GITHUB_REPO", "adityakrmishra/triagelens")
 GITHUB_BRANCH = os.getenv("GITHUB_BRANCH", "main")
 
 
 def _is_placeholder(token: str) -> bool:
-    """True if token is missing, empty, or a dummy placeholder."""
     if not token or not token.strip():
         return True
     lower = token.strip().lower()
     return lower.startswith("your_") or lower in ("none", "null", "placeholder", "test")
 
-
-# ---------------------------------------------------------------------------
-# Issue Payload Builder
-# ---------------------------------------------------------------------------
 
 def build_github_issue_payload(
     cluster: dict,
@@ -49,20 +33,6 @@ def build_github_issue_payload(
     repro_result: dict,
     override_owner: str | None = None,
 ) -> dict[str, Any]:
-    """
-    Format an executive-grade GitHub Issue payload from triaged components.
-
-    Args:
-        cluster:           Normalized ticket cluster dict.
-        suspect_functions: List of top matched functions from ChromaDB.
-        owner_info:        Git blame attribution dict from suggest_owner_from_blame.
-        llm_analysis:      Dictionary with cluster_summary and match_reasons.
-        repro_result:      Agent37 sandbox test result dict.
-        override_owner:    Optional engineer override from UI.
-
-    Returns:
-        dict with `title`, `body` (Markdown), and `labels`.
-    """
     priority = cluster.get("priority", "P1")
     dup_count = cluster.get("duplicate_count", len(cluster.get("tickets", [])))
     prio_reason = cluster.get("priority_reason", "")
@@ -89,15 +59,11 @@ def build_github_issue_payload(
     test_code = repro_result.get("test_code", "# No test code generated")
     pytest_stdout = repro_result.get("pytest_stdout", "")
 
-    # Title
     title = f"[{priority}] Silent Bug in {top_fn_name}(): {rep_subject} ({dup_count} report(s))"
-
-    # Labels
     labels = ["triagelens", priority.lower(), "silent-bug", "agent37-verified"]
 
-    # Markdown Body Construction
     lines: list[str] = [
-        "## 🔍 TriageLens Automated Triage Report",
+        "## TriageLens Automated Triage Report",
         "",
         "| Attribute | Value |",
         "| :--- | :--- |",
@@ -108,12 +74,12 @@ def build_github_issue_payload(
         "",
         "---",
         "",
-        "### 📋 Executive Summary",
+        "### Executive Summary",
         summary_text,
         "",
         "---",
         "",
-        "### 🎯 Shortlisted Suspect Functions (Python AST + Semantic Indexing)",
+        "### Shortlisted Suspect Functions (Python AST + Semantic Indexing)",
         "",
     ]
 
@@ -125,7 +91,6 @@ def build_github_issue_payload(
         sig = fn.get("signature", f"def {f_name}()")
         score = fn.get("similarity_score", 0.0)
 
-        # Build GitHub permalink
         clean_fpath = f_path.replace("\\", "/").strip("/")
         if not clean_fpath.startswith("demo_target_repo/"):
             repo_rel_path = f"demo_target_repo/{clean_fpath}"
@@ -155,14 +120,14 @@ def build_github_issue_payload(
     lines.extend([
         "---",
         "",
-        "### 👤 Suggested Code Owner (`git blame` Signal)",
+        "### Suggested Code Owner (git blame Signal)",
         f"- **Primary Engineer**: **{assigned_owner}** ({author_name} &lt;{author_email}&gt;)",
         f"- **Line Ownership**: `{ownership_pct:.1%}` of function implementation",
         f"- **Planted / Latest Commit**: `{commit_hash}` — *\"{commit_summary}\"* (`{commit_date}`)",
         "",
         "---",
         "",
-        f"### 🧪 Agent37 Isolated Sandbox Reproduction (`Instance: {instance_id}`)",
+        f"### Agent37 Isolated Sandbox Reproduction (Instance: {instance_id})",
         "- **Sandbox Platform**: [Agent37 Cloud Sandbox](https://api.agent37.com) (`sandbox.agent37.app`)",
         "- **Verification Protocol**: Automated `pytest` execution verifying silent logic bug divergence (`AssertionError`)",
         "",
@@ -188,7 +153,7 @@ def build_github_issue_payload(
         "",
         "---",
         "",
-        f"### 📑 Grouped Customer Support Tickets ({dup_count})",
+        f"### Grouped Customer Support Tickets ({dup_count})",
         "",
         "| Ticket ID | Source | Customer | Subject / Summary |",
         "| :--- | :--- | :--- | :--- |",
@@ -220,28 +185,11 @@ def build_github_issue_payload(
     }
 
 
-# ---------------------------------------------------------------------------
-# GitHub Issue Publisher
-# ---------------------------------------------------------------------------
-
 def publish_github_issue(
     issue_payload: dict,
     cluster_id: str,
     output_dir: str = "output_issues",
 ) -> dict[str, Any]:
-    """
-    Publish an issue to GitHub and always save a local Markdown artifact.
-
-    Args:
-        issue_payload: Dict containing `title`, `body`, and `labels`.
-        cluster_id:    Unique cluster identifier (e.g. 'CLU-001').
-        output_dir:    Local directory to persist Markdown artifacts.
-
-    Returns:
-        dict with `status` ('published' | 'saved_locally'), `local_path`,
-        and optional `issue_url` and `issue_number`.
-    """
-    # 1. Always persist local Markdown copy
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
     local_file = out_path / f"issue_{cluster_id}.md"
@@ -253,7 +201,6 @@ def publish_github_issue(
     )
     local_file.write_text(md_content, encoding="utf-8", errors="replace")
 
-    # 2. Attempt GitHub REST API publishing if token is present
     active_token = os.getenv("GITHUB_TOKEN", GITHUB_TOKEN).strip()
     active_repo = os.getenv("GITHUB_REPO", GITHUB_REPO).strip()
     if not _is_placeholder(active_token):
@@ -278,23 +225,16 @@ def publish_github_issue(
                 data = resp.json()
                 issue_url = data.get("html_url", "")
                 issue_number = data.get("number", 0)
-                print(f"[OK]   GitHub issue published: {issue_url}")
                 return {
                     "status": "published",
                     "issue_url": issue_url,
                     "issue_number": issue_number,
                     "local_path": local_file.as_posix(),
                 }
-            else:
-                print(
-                    f"[WARN] GitHub API returned status {resp.status_code}: "
-                    f"{resp.text[:120]}. Falling back to local artifact."
-                )
 
         except Exception as exc:
-            print(f"[WARN] GitHub publishing failed: {exc}. Saved locally.")
+            pass
 
-    print(f"[OK]   Issue artifact saved locally at {local_file.as_posix()}")
     return {
         "status": "saved_locally",
         "local_path": local_file.as_posix(),

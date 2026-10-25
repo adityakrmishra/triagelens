@@ -1,11 +1,5 @@
 """
-app.py
-------
-TriageLens: Autonomous Silent-Bug Triage Command Center.
-Streamlit Web Application for Live Demo, Hackathon Judging, and Cloud Deployment.
-
-Optimized for instant (< 0.3s) initial render without blocking on PyTorch,
-ChromaDB locks, or remote network latency.
+TriageLens: Autonomous Support-to-Code Triage Command Center.
 """
 
 from __future__ import annotations
@@ -20,28 +14,22 @@ from typing import Any
 
 import streamlit as st
 
-# MUST BE THE VERY FIRST EXECUTABLE STREAMLIT COMMAND
 st.set_page_config(
-    page_title="TriageLens | Autonomous Silent-Bug Triage",
-    page_icon="🔭",
+    page_title="TriageLens — Autonomous Support-to-Code Triage",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 from dotenv import load_dotenv
 
-# Ensure project root is on sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-# Load environment defaults
 load_dotenv(PROJECT_ROOT / ".env", override=False)
 
-# Custom Sleek Dark-Theme CSS
 st.markdown(
     """
     <style>
-    /* Dark Theme Accent Styling */
     .metric-card {
         background: #161b22;
         border: 1px solid #30363d;
@@ -95,16 +83,7 @@ st.markdown(
 )
 
 
-# ---------------------------------------------------------------------------
-# Instant Pre-Cached Cluster & Analysis Loader (0.003s startup)
-# ---------------------------------------------------------------------------
-
 def load_default_clusters_and_cache(project_root: Path) -> tuple[list[dict], dict[str, dict]]:
-    """
-    Instantly assemble the 4 pre-verified clusters and their complete triage analyses
-    from local repository artifacts (ZERO PyTorch, ZERO ChromaDB locks, ZERO network latency).
-    Loads in under 5 milliseconds.
-    """
     tickets_path = project_root / "data" / "sample_tickets.json"
     raw_tickets = []
     if tickets_path.exists():
@@ -487,12 +466,7 @@ def load_default_clusters_and_cache(project_root: Path) -> tuple[list[dict], dic
     return clusters, cache
 
 
-# ---------------------------------------------------------------------------
-# Fast AST Scanner for Live Ticket Injection (0.015s execution)
-# ---------------------------------------------------------------------------
-
 def extract_repo_ast_functions(repo_path: str = "demo_target_repo") -> list[dict]:
-    """Parse shopflow python files with standard library ast (instant, zero memory overhead)."""
     import ast
     repo_dir = PROJECT_ROOT / repo_path
     functions = []
@@ -530,7 +504,6 @@ def extract_repo_ast_functions(repo_path: str = "demo_target_repo") -> list[dict
 
 
 def fast_match_suspect_functions(query: str, functions: list[dict], top_k: int = 3) -> list[dict]:
-    """Score AST functions based on keyword overlap with ticket text."""
     words = [w for w in re.findall(r"\w+", query.lower()) if len(w) > 2]
     scored = []
     for fn in functions:
@@ -555,10 +528,6 @@ def fast_match_suspect_functions(query: str, functions: list[dict], top_k: int =
     return results
 
 
-# ---------------------------------------------------------------------------
-# Session State Initialization (Instant Boot)
-# ---------------------------------------------------------------------------
-
 if "clusters" not in st.session_state or "cluster_cache" not in st.session_state:
     init_clusters, init_cache = load_default_clusters_and_cache(PROJECT_ROOT)
     st.session_state["clusters"] = init_clusters
@@ -579,17 +548,13 @@ if "published_issues" not in st.session_state:
     st.session_state["published_issues"] = {}
 
 
-# ---------------------------------------------------------------------------
-# Sidebar: Controls & Live Ticket Injector
-# ---------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("## 🔭 TriageLens Controls")
-    st.caption("Autonomous Silent-Bug Triage & Sandbox Reproduction Engine")
+    st.markdown("## TriageLens Console")
+    st.caption("Autonomous Support-to-Code Triage & Sandbox Reproduction Engine")
     st.divider()
 
-    st.markdown("### 📥 1. Ticket Intake")
+    st.markdown("### 1. Ticket Intake")
 
-    # JSON File Uploader
     uploaded_file = st.file_uploader(
         "Upload Custom Webhook JSON",
         type=["json"],
@@ -610,8 +575,7 @@ with st.sidebar:
         except Exception as exc:
             st.error(f"Error parsing JSON: {exc}")
 
-    # Live Judge Ticket Injector Expander
-    with st.expander("⚡ Live Judge Ticket Injector", expanded=False):
+    with st.expander("Live Ticket Injector", expanded=False):
         st.write("Type a customer complaint to watch TriageLens cluster and link it to Python code live:")
         inject_subject = st.text_input("Complaint Subject", value="VIP25 code not applying on sale items")
         inject_body = st.text_area(
@@ -640,7 +604,6 @@ with st.sidebar:
             }
             st.session_state["raw_tickets"].append(new_ticket)
 
-            # Fast AST matching against repo
             all_funcs = extract_repo_ast_functions("demo_target_repo")
             query_str = f"{inject_subject} {inject_body}"
             top_matches = fast_match_suspect_functions(query_str, all_funcs, top_k=3)
@@ -656,7 +619,6 @@ with st.sidebar:
                 "combined_cluster_query": query_str,
             }
 
-            # Seed analysis into cache
             st.session_state["cluster_cache"][new_cid] = {
                 "matches": top_matches,
                 "blame": {
@@ -684,7 +646,7 @@ with st.sidebar:
                     "test_file_path": f"agent37_workspace/{new_cid}/test_repro_{top_fn.get('function_name', 'fn')}.py",
                     "test_code": f"# Live injected repro test for {new_cid}\nimport pytest\n\ndef test_{top_fn.get('function_name', 'fn')}_live():\n    pass\n",
                     "failure_summary": "Ready for isolated sandbox verification.",
-                    "pytest_stdout": "[Agent37 Sandbox] Click 'Re-Run Pytest in Agent37 Sandbox' below to verify this live ticket.",
+                    "pytest_stdout": "[Agent37 Sandbox] Click 'Re-Run Pytest in Sandbox' below to verify this live ticket.",
                     "duration_ms": 0,
                     "cloud_probe": {"authenticated": True, "active_instance_id": "vsaotlwmjm"},
                 },
@@ -693,7 +655,7 @@ with st.sidebar:
             st.toast(f"Ticket {new_id} injected! Linked to {top_fn.get('function_id', 'AST')}.")
             st.rerun()
 
-    if st.button("🔄 Reset to 8 Sample Tickets", use_container_width=True):
+    if st.button("Reset to Sample Tickets", use_container_width=True):
         init_clusters, init_cache = load_default_clusters_and_cache(PROJECT_ROOT)
         st.session_state["clusters"] = init_clusters
         st.session_state["cluster_cache"] = init_cache
@@ -703,12 +665,12 @@ with st.sidebar:
         if tickets_path.exists():
             with open(tickets_path, encoding="utf-8", errors="replace") as fh:
                 st.session_state["raw_tickets"] = json.load(fh)
-        st.toast("Reset to 8 default tickets.")
+        st.toast("Reset to sample tickets.")
         st.rerun()
 
     st.divider()
 
-    st.markdown("### ⚙️ 2. Environment Settings")
+    st.markdown("### 2. Environment Settings")
     st.info("Target Repo: `demo_target_repo/shopflow`\n\nIndexed Functions: **8** AST nodes")
 
     agent37_inst = st.text_input(
@@ -735,10 +697,7 @@ with st.sidebar:
             st.success(f"Indexed {len(funcs)} functions into ChromaDB!")
 
 
-# ---------------------------------------------------------------------------
-# Main Page: Header & KPI Metrics
-# ---------------------------------------------------------------------------
-st.title("🔭 TriageLens — Autonomous Support-to-Code Triage")
+st.title("TriageLens — Autonomous Support-to-Code Triage")
 st.markdown(
     "**Autonomous Silent-Bug Triage & Sandbox Reproduction Engine** — "
     "Bridging the gap between plain-language customer tickets and production code without stack traces."
@@ -758,7 +717,6 @@ avg_confidence = (
     else 0.0
 )
 
-# Top 5 Metric Cards
 m1, m2, m3, m4, m5 = st.columns(5)
 with m1:
     st.metric(label="Raw Tickets Ingested", value=raw_count, delta="Zendesk + Jira")
@@ -773,11 +731,7 @@ with m5:
 
 st.divider()
 
-
-# ---------------------------------------------------------------------------
-# Cluster Selector & Triage Workbench
-# ---------------------------------------------------------------------------
-st.markdown("### 🗂️ Triaged Bug Clusters")
+st.markdown("### Triaged Bug Clusters")
 
 cluster_options = [
     f"{c['cluster_id']} | [{c['priority']}] ({c['duplicate_count']} reports) — {c['representative_ticket'].get('subject', c['representative_ticket'].get('summary', ''))[:55]}..."
@@ -803,31 +757,26 @@ if selected_label:
     top_fn = matches[0] if matches else {}
     top_fn_name = top_fn.get("function_name", "N/A")
 
-    # Current owner (accounting for any user override)
     active_owner = st.session_state["owner_overrides"].get(
         curr_cluster["cluster_id"], blame.get("github_handle", "@unassigned")
     )
 
-    # 5 Rich Tabs for Cluster Inspection & Judge Value Story
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "🎯 1. Shortlisted AST Code & Reasoning",
-        "👤 2. Git Blame Owner & Override",
-        "🧪 3. Agent37 Sandbox Reproduction",
-        "📑 4. Tickets & 1-Click GitHub Publisher",
-        "💡 5. Why TriageLens (Market Comparison & Impact)",
+        "1. AST Code & Reasoning",
+        "2. Git Blame & Ownership",
+        "3. Sandbox Reproduction",
+        "4. Tickets & GitHub Sync",
+        "5. Architecture & Market Fit",
     ])
 
-    # -----------------------------------------------------------------------
-    # TAB 1: Shortlisted AST Code & Reasoning
-    # -----------------------------------------------------------------------
     with tab1:
-        st.markdown("#### 📋 Executive AI Synthesis")
+        st.markdown("#### Executive Synthesis")
         st.info(llm_analysis.get("cluster_summary", "Synthesis pending."))
 
         st.markdown(f"**Root Cause Hypothesis**: {llm_analysis.get('root_cause_hypothesis', 'Logic defect in target AST node.')}")
         st.markdown("---")
 
-        st.markdown("#### 🎯 Top-3 Shortlisted Suspect Functions (Python AST Indexer)")
+        st.markdown("#### Top-3 Shortlisted Suspect Functions (Python AST Indexer)")
         for idx, fn in enumerate(matches, 1):
             with st.expander(
                 f"Rank #{idx}: `{fn.get('function_id', fn.get('function_name'))}` — Match Score: {fn.get('similarity_score', 0.0):.1%}",
@@ -839,11 +788,8 @@ if selected_label:
                 if fn.get("source_code"):
                     st.code(fn["source_code"], language="python")
 
-    # -----------------------------------------------------------------------
-    # TAB 2: Git Blame Owner & Override
-    # -----------------------------------------------------------------------
     with tab2:
-        st.markdown("#### 👤 Automated Code Ownership Attribution (`git blame`)")
+        st.markdown("#### Code Ownership Attribution (git blame)")
         st.caption(
             "TriageLens correlates the AST line ranges of suspect functions directly to commit logs, "
             "attributing the engineer responsible for the logic defect."
@@ -867,7 +813,7 @@ if selected_label:
             )
 
         with b_col2:
-            st.markdown("##### 🛠️ Assignee Override")
+            st.markdown("##### Assignee Override")
             st.write("Need to reassign to another engineer or team lead? Change the suggestion below:")
 
             engineer_options = [
@@ -902,15 +848,12 @@ if selected_label:
 
             st.info(f"**Final Assigned Owner for GitHub Issue**: `{final_owner}`")
 
-    # -----------------------------------------------------------------------
-    # TAB 3: Agent37 Isolated Sandbox Bug Reproduction
-    # -----------------------------------------------------------------------
     with tab3:
-        st.markdown("#### 🧪 Agent37 Isolated Cloud Sandbox Bug Reproduction")
+        st.markdown("#### Sandbox Bug Reproduction")
         cloud_p = repro.get("cloud_probe", {})
         if cloud_p and cloud_p.get("authenticated"):
             st.success(
-                f"🛡️ **Agent37 Live API Connected**: Authenticated as `{cloud_p.get('account')}` "
+                f"**Agent37 API Connected**: Authenticated as `{cloud_p.get('account')}` "
                 f"| Balance: `${cloud_p.get('balance_usd', 0.0):.4f}` USD | Platform: `https://api.agent37.com`"
             )
 
@@ -929,7 +872,7 @@ if selected_label:
 
         with r_col2:
             st.markdown(f"**Assertion Result**: `{repro.get('failure_summary', 'AssertionError triggered')}`")
-            if st.button("🔄 Re-Run Pytest in Agent37 Sandbox", key=f"re_run_{curr_cluster['cluster_id']}"):
+            if st.button("Re-Run Pytest in Sandbox", key=f"re_run_{curr_cluster['cluster_id']}"):
                 with st.spinner("Executing isolated pytest in Agent37 sandbox..."):
                     from src.agent37_reproducer import reproduce_bug_in_agent37
 
@@ -942,20 +885,17 @@ if selected_label:
         st.markdown("---")
         code_col, log_col = st.columns(2)
         with code_col:
-            st.markdown("##### 📝 Generated `pytest` Reproduction Code")
+            st.markdown("##### Generated pytest Reproduction Code")
             st.code(repro.get("test_code", ""), language="python", line_numbers=True)
 
         with log_col:
-            st.markdown("##### 🖥️ Agent37 Sandbox Execution Terminal Output")
+            st.markdown("##### Sandbox Execution Output")
             st.code(repro.get("pytest_stdout", ""), language="text")
 
-        # -------------------------------------------------------------------
-        # Live Interactive Debugger (Hot-Patch the Cloud Container)
-        # -------------------------------------------------------------------
         st.markdown("---")
-        st.markdown("## 🛠️ Live Interactive Debugger (Hot-Patch the Cloud Container)")
+        st.markdown("## Live Interactive Debugger (Container Hot-Patch)")
         st.markdown(
-            "Prove live, bi-directional Agent37 cloud execution! Edit the complete source code below "
+            "Prove live, bi-directional Agent37 cloud execution. Edit the complete source code below "
             "to fix the silent business-logic bug, deploy the patch into the sandbox, and verify whether pytest turns green in real time."
         )
 
@@ -969,7 +909,7 @@ if selected_label:
         )
         full_file_source_code = load_target_file_content(target_file_rel, repo_path="demo_target_repo")
 
-        with st.expander("💡 Judge Hint / Quick Demonstration Fix", expanded=False):
+        with st.expander("Demonstration Quick-Fix Guide", expanded=False):
             st.markdown(
                 f"**Target Module**: `{container_file_path}` (`{top_fn_name}`)\n\n"
                 "**How to Fix**: In `shopflow/pricing.py`, locate the early return on sale items:\n"
@@ -982,7 +922,7 @@ if selected_label:
                 "if has_sale_item and not (is_vip and code == 'VIP25'):\n"
                 "    return round(cart_total, 2)\n"
                 "```\n"
-                "(or simply delete `if has_sale_item: return round(cart_total, 2)`). Then click **Deploy & Test Fix** below!"
+                "(or simply delete `if has_sale_item: return round(cart_total, 2)`). Then click **Deploy & Test Patch in Sandbox** below."
             )
 
         edited_code = st.text_area(
@@ -1001,7 +941,7 @@ if selected_label:
         deploy_col, _ = st.columns([2, 3])
         with deploy_col:
             deploy_btn = st.button(
-                "🧪 Deploy & Test Fix in Agent37 Cloud Sandbox",
+                "Deploy & Test Patch in Sandbox",
                 type="primary",
                 key=f"deploy_btn_{curr_cluster['cluster_id']}",
                 use_container_width=True,
@@ -1020,22 +960,18 @@ if selected_label:
 
         active_patch_res = st.session_state.get(f"patch_res_{curr_cluster['cluster_id']}")
         if active_patch_res:
-            st.markdown("##### 🖥️ Live Cloud Container Terminal Output")
+            st.markdown("##### Container Terminal Output")
             st.code(active_patch_res.get("stdout", ""), language="bash")
             if active_patch_res.get("passed"):
-                st.balloons()
-                st.success("✅ PATCH VERIFIED! The silent bug is fixed in the sandbox.")
+                st.success("Patch verified in sandbox. All assertions passed.")
             else:
-                st.error("❌ Tests still failing. Check the output above.")
+                st.error("Tests failing in sandbox. Inspect trace above.")
 
-    # -----------------------------------------------------------------------
-    # TAB 4: Tickets & 1-Click GitHub Issue Publisher
-    # -----------------------------------------------------------------------
     with tab4:
-        st.markdown("#### 📑 Grouped Customer Support Tickets in this Cluster")
+        st.markdown("#### Grouped Customer Support Tickets in this Cluster")
         ticket_table_data = [
             {
-                "Ticket ID": t.get("id", t.get("ticket_id", "N/A")),
+                "Ticket ID": str(t.get("id", t.get("ticket_id", "N/A"))),
                 "Source": t.get("_schema", "zendesk_v2").replace("_v2", "").replace("_v3", "").upper(),
                 "Customer": (
                     t.get("requester", {}).get("name")
@@ -1055,7 +991,7 @@ if selected_label:
         st.dataframe(ticket_table_data, use_container_width=True)
 
         st.markdown("---")
-        st.markdown("#### 🚀 1-Click Executive GitHub Issue Publisher")
+        st.markdown("#### GitHub Issue Publisher")
 
         from src.github_issue import build_github_issue_payload, publish_github_issue
 
@@ -1068,11 +1004,10 @@ if selected_label:
             override_owner=active_owner,
         )
 
-        # Publisher buttons row
         btn_col1, btn_col2, btn_col3 = st.columns([2, 2, 3])
 
         with btn_col1:
-            if st.button("🚀 Publish Issue to GitHub (REST API)", type="primary", use_container_width=True):
+            if st.button("Publish Issue to GitHub", type="primary", use_container_width=True):
                 with st.spinner("Publishing issue to GitHub..."):
                     if gh_token:
                         os.environ["GITHUB_TOKEN"] = gh_token
@@ -1083,29 +1018,26 @@ if selected_label:
                     st.session_state["published_issues"][curr_cluster["cluster_id"]] = pub_res
 
                     if pub_res.get("status") == "published":
-                        st.balloons()
-                        st.success(f"Issue Published! [Open Issue #{pub_res.get('issue_number')}]({pub_res.get('issue_url')})")
+                        st.success(f"Issue published: [Open Issue #{pub_res.get('issue_number')}]({pub_res.get('issue_url')})")
                     else:
                         st.info(f"Issue saved locally to `{pub_res.get('local_path')}` (Add GITHUB_TOKEN to publish live)")
 
         with btn_col2:
             st.download_button(
-                label="📥 Download Markdown Issue Artifact",
+                label="Download Markdown Issue Artifact",
                 data=issue_payload["body"],
                 file_name=f"issue_{curr_cluster['cluster_id']}.md",
                 mime="text/markdown",
                 use_container_width=True,
             )
 
-        # Show publication status if available
         if curr_cluster["cluster_id"] in st.session_state["published_issues"]:
             res = st.session_state["published_issues"][curr_cluster["cluster_id"]]
             if res.get("status") == "published":
-                st.markdown(f"**Live GitHub Issue**: [🔗 {res.get('issue_url')}]({res.get('issue_url')})")
+                st.markdown(f"**Live GitHub Issue**: [{res.get('issue_url')}]({res.get('issue_url')})")
             else:
                 st.markdown(f"**Local Artifact**: `{res.get('local_path')}`")
 
-        # Issue Preview Toggle
         preview_mode = st.radio("Issue Format Preview:", ["Rendered Markdown Preview", "Raw Markdown Source"], horizontal=True)
         if preview_mode == "Rendered Markdown Preview":
             st.markdown(f"### {issue_payload['title']}")
@@ -1114,14 +1046,10 @@ if selected_label:
         else:
             st.code(f"# {issue_payload['title']}\n\n{issue_payload['body']}", language="markdown")
 
-    # -----------------------------------------------------------------------
-    # TAB 5: Why TriageLens (Market Comparison & Quantified Impact)
-    # -----------------------------------------------------------------------
     with tab5:
-        st.markdown("### 💡 Why TriageLens: Market Gap & Quantified Impact")
+        st.markdown("### Architecture & Market Fit")
         st.caption("Addressing the critical blind spot in modern software engineering and customer support.")
 
-        # 1. The Silent Bug Story
         st.markdown("#### 1. The Silent Bug Story: Why Sentry & APM Tools Are Blind")
         st.markdown(
             """
@@ -1137,32 +1065,30 @@ if selected_label:
 
         st.markdown("---")
 
-        # 2. Competitive Feature Matrix
         st.markdown("#### 2. Competitive Feature Matrix")
         st.markdown(
             """
             | Capability | Traditional APM (Sentry/Datadog) | Jira / Zendesk Auto-Triage | **TriageLens (Our Solution)** |
             | :--- | :---: | :---: | :---: |
-            | **Catches Silent Bugs (No Stack Trace)** | ❌ Blind (HTTP 200 OK) | ❌ Text-only routing | ✅ **Full Detection & Attribution** |
-            | **Cross-Platform Deduplication** | ❌ None | ⚠️ Basic keyword match | ✅ **Semantic Cosine Clustering** |
-            | **Direct AST Code Mapping** | ❌ Requires stack trace | ❌ No codebase awareness | ✅ **Python AST Vector Indexing** |
-            | **Automated Git Blame Attribution** | ⚠️ Generic commit link | ❌ None | ✅ **Function Line Blame & Override** |
-            | **Isolated Cloud Sandbox Repro** | ❌ None | ❌ None | ✅ **Agent37 Cloud Sandbox Runner** |
-            | **Interactive Cloud Hot-Patching** | ❌ None | ❌ None | ✅ **Live In-Container Hot-Patching** |
-            | **1-Click GitHub Issues + Permalinks** | ⚠️ Crash report dump | ⚠️ Plain text summary | ✅ **Executive Spec + Line Permalinks** |
+            | **Catches Silent Bugs (No Stack Trace)** | [Unsupported] Blind (HTTP 200 OK) | [Unsupported] Text-only routing | [Supported] **Full Detection & Attribution** |
+            | **Cross-Platform Deduplication** | [Unsupported] None | [Partial] Basic keyword match | [Supported] **Semantic Cosine Clustering** |
+            | **Direct AST Code Mapping** | [Unsupported] Requires stack trace | [Unsupported] No codebase awareness | [Supported] **Python AST Vector Indexing** |
+            | **Automated Git Blame Attribution** | [Partial] Generic commit link | [Unsupported] None | [Supported] **Function Line Blame & Override** |
+            | **Isolated Cloud Sandbox Repro** | [Unsupported] None | [Unsupported] None | [Supported] **Agent37 Cloud Sandbox Runner** |
+            | **Interactive Cloud Hot-Patching** | [Unsupported] None | [Unsupported] None | [Supported] **Live In-Container Hot-Patching** |
+            | **1-Click GitHub Issues + Permalinks** | [Partial] Crash report dump | [Partial] Plain text summary | [Supported] **Executive Spec + Line Permalinks** |
             """
         )
 
         st.markdown("---")
 
-        # 3. Quantified ROI Impact Calculator
         st.markdown("#### 3. Quantified Engineering ROI Impact")
         st.markdown(
             """
             Across an engineering organization processing 1,000+ support tickets per month:
-            - ⏱️ **Mean Time to Detection (MTTD)**: Slashed from **18.4 days** to **under 5 minutes**.
-            - ⏳ **Mean Time to Resolution (MTTR)**: Slashed from **4.2 days** to **under 45 minutes** with reproducible test cases.
-            - 💰 **Direct Engineering Savings**: Eliminates ~140 hours of manual ticket triage and reproduction engineering per month (~$14,000/mo).
-            - 🛡️ **Revenue Protection**: Prevents silent customer churn and billing leakage before complaints escalate.
+            - **Mean Time to Detection (MTTD)**: Slashed from **18.4 days** to **under 5 minutes**.
+            - **Mean Time to Resolution (MTTR)**: Slashed from **4.2 days** to **under 45 minutes** with reproducible test cases.
+            - **Direct Engineering Savings**: Eliminates ~140 hours of manual ticket triage and reproduction engineering per month (~$14,000/mo).
+            - **Revenue Protection**: Prevents silent customer churn and billing leakage before complaints escalate.
             """
         )

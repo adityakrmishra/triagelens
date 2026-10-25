@@ -1,56 +1,33 @@
 """
-src/llm_reasoner.py
--------------------
-LLM-based match reasoner and customer complaint synthesizer for TriageLens.
-
-Uses OpenAI-compatible chat completions API (or a rich, AST-aware deterministic
-fallback if the API key is not configured or network calls fail) to:
-  1. Produce an executive 2-sentence engineering summary for the ticket cluster.
-  2. Explain why each shortlisted AST function matched the customer complaint.
+LLM reasoner and deterministic AST fallback synthesizer.
 """
 
 from __future__ import annotations
 
 import json
 import os
-import re
-from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
-# ---------------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------------
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.openai.com/v1").rstrip("/")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
 
 
 def _is_placeholder(key: str) -> bool:
-    """True if key is missing, empty, or a dummy placeholder."""
     if not key or not key.strip():
         return True
     lower = key.strip().lower()
     return lower.startswith("your_") or lower in ("none", "null", "placeholder", "test")
 
 
-# ---------------------------------------------------------------------------
-# AST-Aware Deterministic Fallback Reasoner
-# ---------------------------------------------------------------------------
-
 def _deterministic_ast_reasoning(
     cluster: dict,
     suspect_functions: list[dict],
 ) -> dict[str, Any]:
-    """
-    Rich, AST-aware deterministic fallback that inspects function source code,
-    parameters, and docstrings to produce code-level match explanations.
-    """
-    cluster_id = cluster.get("cluster_id", "")
     dup_count = cluster.get("duplicate_count", len(cluster.get("tickets", [])))
     prio = cluster.get("priority", "P1")
     rep_ticket = cluster.get("representative_ticket", {})
@@ -58,7 +35,6 @@ def _deterministic_ast_reasoning(
     body = rep_ticket.get("body", "").lower()
     combined = f"{subject} {body}"
 
-    # --- 1. Executive Summary Synthesizer ---
     if "vip" in combined or "promo" in combined or "discount" in combined:
         cluster_summary = (
             f"Multiple high-value VIP customers report that entering the VIP25 promo code leaves cart totals "
@@ -89,62 +65,52 @@ def _deterministic_ast_reasoning(
             f"Investigation reveals an unexpected business-logic divergence in the affected workflow."
         )
 
-    # --- 2. Per-Function Code-Level Match Reasons ---
     match_reasons: dict[str, str] = {}
 
     for fn in suspect_functions:
         fn_name = fn.get("function_name", "")
         file_path = fn.get("file_path", "")
         score = fn.get("similarity_score", 0.0)
-        source = fn.get("source_code", "")
 
-        # Planted bug 1: apply_promo
         if fn_name == "apply_promo":
             match_reasons[fn_name] = (
                 "Rank #1 match: Function 'apply_promo' in shopflow/pricing.py contains the condition "
                 "'if has_sale_item: return round(cart_total, 2)' which silently bypasses the VIP25 discount "
                 "whenever any clearance/sale item is present in the cart, directly causing the reported zero-discount behavior."
             )
-        # Planted bug 2: resolve_free_shipping
         elif fn_name == "resolve_free_shipping":
             match_reasons[fn_name] = (
                 "Rank #1 match: Function 'resolve_free_shipping' in shopflow/checkout.py checks eligibility with strict inequality "
                 "'if cart_subtotal > threshold:' rather than '>=', incorrectly assessing standard shipping fees on carts "
                 "that hit the free-shipping threshold exactly."
             )
-        # Planted bug 3: check_magic_link_expiry
         elif fn_name == "check_magic_link_expiry":
             match_reasons[fn_name] = (
                 "Rank #1 match: Function 'check_magic_link_expiry' in shopflow/auth_session.py evaluates "
                 "'elapsed_time <= ttl_minutes' where elapsed_time is measured in seconds, missing the '* 60' factor and "
                 "causing 15-minute magic links to expire in only 15 seconds."
             )
-        # Planted bug 4: prorate_upgrade_charge
         elif fn_name == "prorate_upgrade_charge":
             match_reasons[fn_name] = (
                 "Rank #1 match: Function 'prorate_upgrade_charge' in shopflow/subscriptions.py computes "
                 "'days_used = billing_cycle_days - days_remaining' and charges for elapsed days rather than remaining days, "
                 "inverting the customer's proration formula."
             )
-        # Secondary candidate: calculate_subtotal
         elif fn_name == "calculate_subtotal":
             match_reasons[fn_name] = (
                 f"Secondary match in {file_path} (similarity {score:.2%}): Computes raw item totals prior to discount evaluation; "
                 "matched due to shared pricing and cart calculation domain."
             )
-        # Secondary candidate: calculate_tax
         elif fn_name == "calculate_tax":
             match_reasons[fn_name] = (
                 f"Secondary match in {file_path} (similarity {score:.2%}): Applies regional tax rates on the post-discount amount; "
                 "shortlisted as a downstream component in the pricing calculation flow."
             )
-        # Secondary candidate: validate_shipping_address
         elif fn_name == "validate_shipping_address":
             match_reasons[fn_name] = (
                 f"Secondary match in {file_path} (similarity {score:.2%}): Validates postal code and address fields; "
                 "matched due to shared shipping validation context in the checkout pipeline."
             )
-        # Secondary candidate: verify_password_hash
         elif fn_name == "verify_password_hash":
             match_reasons[fn_name] = (
                 f"Secondary match in {file_path} (similarity {score:.2%}): Verifies user password hashes; "
@@ -164,35 +130,13 @@ def _deterministic_ast_reasoning(
     }
 
 
-# ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
-
 def explain_matches_and_summarize(
     cluster: dict,
     suspect_functions: list[dict],
 ) -> dict[str, Any]:
-    """
-    Generate an executive engineering summary and per-function match explanations.
-
-    Attempts to use the OpenAI-compatible chat completions API first.
-    If the API key is not configured, invalid, or the call fails/times out,
-    seamlessly falls back to the rich AST-aware deterministic reasoner.
-
-    Args:
-        cluster:           Normalized and clustered ticket dictionary.
-        suspect_functions: List of top matched function dictionaries from ChromaDB.
-
-    Returns:
-        Dictionary with:
-          - cluster_summary: str
-          - match_reasons: dict[str, str] (mapping function_name -> explanation)
-          - mode: "llm_api" | "ast_heuristic_fallback"
-    """
     if _is_placeholder(LLM_API_KEY):
         return _deterministic_ast_reasoning(cluster, suspect_functions)
 
-    # Attempt OpenAI-compatible API call
     try:
         import requests
 
@@ -259,16 +203,14 @@ def explain_matches_and_summarize(
             summary = parsed.get("cluster_summary", "").strip()
             reasons = parsed.get("match_reasons", {})
 
-            # Ensure all functions have a reason
             if summary and isinstance(reasons, dict) and len(reasons) > 0:
-                print(f"[OK]   LLM reasoning successfully generated via {LLM_MODEL}")
                 return {
                     "cluster_summary": summary,
                     "match_reasons": reasons,
                     "mode": "llm_api",
                 }
 
-    except Exception as exc:
-        print(f"[INFO] LLM API call unavailable ({type(exc).__name__}). Using AST deterministic fallback.")
+    except Exception:
+        pass
 
     return _deterministic_ast_reasoning(cluster, suspect_functions)
